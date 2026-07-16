@@ -1,0 +1,108 @@
+{
+  "mission": "Audit du processus de traitement des réclamations clients",
+  "total_risques": 17,
+  "risks": [
+    {
+      "objet": "Réception des réclamations",
+      "sous_objet": "Enregistrement sur la PGR",
+      "risque": "Réclamation non saisie ou saisie incomplète\n(Exemples : réclamations saisies au niveau du registre dans les gares, réclamations verbales remontées par les ACT au niveau de leurs rapport circonstanciels …)",
+      "bonnes_pratiques": "Contrôle journalier et checklist de saisie obligatoire"
+    },
+    {
+      "objet": "Réception des réclamations",
+      "sous_objet": "Connaissance des canaux de réclamation par les clients",
+      "risque": "Risque que les clients ignorent les différents canaux de réclamation",
+      "bonnes_pratiques": "Assurer une communication efficace des canals mise en place pour les réclamations client"
+    },
+    {
+      "objet": "Réception des réclamations",
+      "sous_objet": "Canaux de réception",
+      "risque": "Réclamations doublonnées ou taités plusieurs fois suite à une soumission multi-canal",
+      "bonnes_pratiques": "Mise en place d'un système de détection des doublons"
+    },
+    {
+      "objet": "Traitement initial",
+      "sous_objet": "Analyse et qualification",
+      "risque": "Mauvaise catégorisation ou traitement inapproprié",
+      "bonnes_pratiques": "Utilisation systématique de guides de catégorisation + revue par un superviseur en cas de doute"
+    },
+    {
+      "objet": "Traitement initial",
+      "sous_objet": "Envoi d’une lettre d’attente au client",
+      "risque": "Oubli d’envoyer une lettre d’attente",
+      "bonnes_pratiques": "Automatiser les notifications par la plateforme dès qu’une réclamation est enregistrée"
+    },
+    {
+      "objet": "Traitement initial",
+      "sous_objet": "Respect des délais",
+      "risque": "Non respect des délais de traitement",
+      "bonnes_pratiques": "Alerte automatique dans le cas de dépassement de délai"
+    },
+    {
+      "objet": "Enquête / Escalade",
+      "sous_objet": "Orientation de la réclamation",
+      "risque": "Réclamation non dirigée vers l'entité concernée",
+      "bonnes_pratiques": "Alerte automatique dans le cas de dépassement de délai"
+    },
+    {
+      "objet": "Enquête / Escalade",
+      "sous_objet": "Transmission à l'entité concernée",
+      "risque": "Retard ou absence de réponse des entités impliquées",
+      "bonnes_pratiques": "Intégration d’indicateurs de performance (KPI) sur les délais de réponse et escalades répétées"
+    },
+    {
+      "objet": "Enquête / Escalade",
+      "sous_objet": "Qualité du retour des entités concernées",
+      "risque": "Réponses imprécises ou inexploitable",
+      "bonnes_pratiques": "Intégration d’indicateurs de performance (KPI) sur les délais de réponse et escalades répétées"
+    },
+    {
+      "objet": "Enquête / Escalade",
+      "sous_objet": "Rôle des entités",
+      "risque": "Flou dans la répartition des responsabilités",
+      "bonnes_pratiques": "Définir une matrice RACI claire dans la procédure + rappeler les responsabilités dans chaque atelier de sensibilisation"
+    },
+    {
+      "objet": "Réponse au client",
+      "sous_objet": "Qualité de la réponse",
+      "risque": "Réponse inadaptée ou non personnalisée\nRisque de dégradation de l'image de l'ONCF",
+      "bonnes_pratiques": "Utilisation de modèles enrichis + validation par un superviseur pour les cas sensibles"
+    },
+    {
+      "objet": "Réponse au client",
+      "sous_objet": "Délai de réponse",
+      "risque": "Risque de dépassement des délais d'envoi des réponses aux clients",
+      "bonnes_pratiques": "Utilisation de modèles enrichis + validation par un superviseur pour les cas sensibles"
+    },
+    {
+      "objet": "Clôture de la réclamation",
+      "sous_objet": "Délai de réponse",
+      "risque": "Réclamation clôturée sans traitement effectif",
+      "bonnes_pratiques": "Avoir un champ \"preuve de traitement\" obligatoire pour toute clôture sur la PGR"
+    },
+    {
+      "objet": "Suivi et Reporting",
+      "sous_objet": "Reporting",
+      "risque": "Retards dans les synthèses hebdomadaires ou mensuelles",
+      "bonnes_pratiques": "Automatisation du reporting via la PGR"
+    },
+    {
+      "objet": "Suivi et Reporting",
+      "sous_objet": "Indicateurs de performance",
+      "risque": "KPIs trop généraux ou mal définis",
+      "bonnes_pratiques": "Définir des indicateurs SMART"
+    },
+    {
+      "objet": "Amélioration continue",
+      "sous_objet": "Capitalisation sur les réclamations récurrentes",
+      "risque": "Non-capitalisation sur les réclamations récurrentes\nRépétition des mêmes incidents sans actions correctives",
+      "bonnes_pratiques": "Revue mensuel d'analyse thématique des réclamations"
+    },
+    {
+      "objet": "Amélioration continue",
+      "sous_objet": "Satisfaction client",
+      "risque": "Absence de mesure de satisfaction post-traitement",
+      "bonnes_pratiques": "Lancer un questionnaire de satisfaction après traitement de chaque réclamation (via mail ou SMS)"
+    }
+  ]
+}

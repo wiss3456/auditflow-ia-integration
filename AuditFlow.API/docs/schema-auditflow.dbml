@@ -1,0 +1,436 @@
+Project AuditFlow {
+  database_type: "PostgreSQL"
+  Note: '''
+  Schema DBML propose a partir de l'application AuditFlow actuelle.
+  Le front stocke aujourd'hui ses donnees principalement en localStorage.
+  Ce schema les normalise pour une vraie base relationnelle exploitable par une API.
+  '''
+}
+
+Enum app_language {
+  fr
+  en
+}
+
+Enum mission_status {
+  planning
+  fieldwork
+  review
+  follow_up
+  closed
+}
+
+Enum mission_priority {
+  high
+  medium
+  low
+}
+
+Enum follow_up_status {
+  not_due
+  planning
+  in_progress
+  at_risk
+  completed
+}
+
+Enum follow_up_evaluation {
+  critique
+  modere
+  mineur
+}
+
+Enum study_tab_key {
+  knowledge
+  risk_listing
+  final_talk
+  audit_planning
+  orientation_report
+}
+
+Enum risk_impact {
+  low
+  medium
+  high
+}
+
+Enum risk_priority {
+  medium
+  high
+  critical
+}
+
+Enum final_risk_assessment {
+  critique
+  moderee
+  mineure
+}
+
+Enum risk_decision_status {
+  brouillon
+  accepte
+  refuse
+}
+
+Enum orientation_urgency {
+  faible
+  moyenne
+  elevee
+}
+
+Enum test_status {
+  ouvert
+  en_cours
+  cloture
+}
+
+Enum access_request_status {
+  pending
+  approved
+  rejected
+}
+
+Enum password_recovery_status {
+  pending
+  completed
+  expired
+}
+
+Table workspaces {
+  id uuid [pk]
+  code varchar(50) [not null, unique, note: 'Exemple: ONCF']
+  name varchar(150) [not null]
+  active_language app_language [not null, default: 'fr']
+  version int [not null, default: 1]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+}
+
+Table auditors {
+  id varchar(50) [pk, note: 'Exemple: ONCF-AUD-001']
+  workspace_id uuid [not null, ref: > workspaces.id]
+  username varchar(100) [not null, unique]
+  email varchar(190) [not null, unique]
+  password_hash varchar(255) [not null, note: 'Le front demo utilise admin7; en base il faut stocker un hash']
+  first_name varchar(100) [not null]
+  last_name varchar(100) [not null]
+  role varchar(120)
+  department varchar(150)
+  avatar_url varchar(255)
+  is_active boolean [not null, default: true]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+}
+
+Table auditor_profiles {
+  auditor_id varchar(50) [pk, ref: > auditors.id]
+  city varchar(120)
+  region varchar(120)
+  country varchar(120)
+  phone varchar(50)
+  timezone varchar(80)
+  job_title varchar(120)
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+}
+
+Table auth_sessions {
+  id uuid [pk]
+  auditor_id varchar(50) [not null, ref: > auditors.id]
+  session_token_hash varchar(255) [not null, unique]
+  started_at timestamptz [not null]
+  expires_at timestamptz
+  revoked_at timestamptz
+  is_active boolean [not null, default: true]
+}
+
+Table access_requests {
+  id uuid [pk]
+  workspace_id uuid [not null, ref: > workspaces.id]
+  first_name varchar(100) [not null]
+  last_name varchar(100) [not null]
+  email varchar(190) [not null]
+  password_supplied boolean [not null, default: false]
+  status access_request_status [not null, default: 'pending']
+  requested_at timestamptz [not null]
+  reviewed_at timestamptz
+  reviewed_by_auditor_id varchar(50) [ref: > auditors.id]
+}
+
+Table password_recovery_requests {
+  id uuid [pk]
+  workspace_id uuid [not null, ref: > workspaces.id]
+  auditor_id varchar(50) [ref: > auditors.id]
+  email varchar(190) [not null]
+  status password_recovery_status [not null, default: 'pending']
+  requested_at timestamptz [not null]
+  completed_at timestamptz
+}
+
+Table app_notifications {
+  id varchar(80) [pk]
+  workspace_id uuid [not null, ref: > workspaces.id]
+  title varchar(150) [not null]
+  message text [not null]
+  created_at timestamptz [not null]
+}
+
+Table mission_templates {
+  id varchar(80) [pk]
+  workspace_id uuid [ref: > workspaces.id]
+  title varchar(150) [not null]
+  description text [not null]
+  default_entity varchar(150)
+  duration_label varchar(80)
+  recommended_team varchar(150)
+  sample_mission_title varchar(180)
+  focus_areas jsonb [note: 'Liste des axes de travail']
+  deliverables jsonb [note: 'Liste des livrables']
+  kickoff_checklist jsonb [note: 'Checklist de lancement']
+  use_case text
+  is_active boolean [not null, default: true]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+}
+
+Table missions {
+  id varchar(50) [pk, note: 'Exemple: ONCF-AI-2026-001']
+  workspace_id uuid [not null, ref: > workspaces.id]
+  template_id varchar(80) [ref: > mission_templates.id]
+  created_by_auditor_id varchar(50) [ref: > auditors.id]
+  owner_auditor_id varchar(50) [ref: > auditors.id]
+  owner_name varchar(150) [not null]
+  title varchar(180) [not null]
+  client varchar(150) [not null]
+  site varchar(150)
+  objective text [not null]
+  scope text [not null]
+  phase_label varchar(150)
+  status mission_status [not null]
+  priority mission_priority [not null]
+  progress int [not null, default: 0]
+  due_date date [not null]
+  open_findings int [not null, default: 0]
+  next_action text
+  archived_at timestamptz
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+
+  Indexes {
+    (workspace_id, status)
+    (workspace_id, due_date)
+    (owner_auditor_id)
+  }
+}
+
+Table follow_up_actions {
+  id varchar(80) [pk]
+  workspace_id uuid [not null, ref: > workspaces.id]
+  mission_id varchar(50) [ref: > missions.id]
+  owner_auditor_id varchar(50) [ref: > auditors.id]
+  created_by_auditor_id varchar(50) [ref: > auditors.id]
+  owner_name varchar(150)
+  title varchar(180) [not null]
+  description text [not null]
+  recommendation_number varchar(50)
+  recommendation text
+  action_detail text [not null]
+  evaluation follow_up_evaluation [not null]
+  status follow_up_status [not null]
+  start_date date [not null]
+  end_date date [not null]
+  deadline_label varchar(120) [note: 'Peut contenir une date formatee ou une valeur libre comme En continu']
+  remarks text
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+
+  Indexes {
+    (workspace_id, status)
+    (mission_id)
+    (owner_auditor_id)
+    (end_date)
+  }
+}
+
+Table study_phase_tabs {
+  id uuid [pk]
+  workspace_id uuid [not null, ref: > workspaces.id]
+  mission_id varchar(50) [ref: > missions.id, note: 'Nullable si l etat reste global au workspace comme dans le front actuel']
+  tab_key study_tab_key [not null]
+  label varchar(120) [not null]
+  description text
+  is_generated boolean [not null, default: false]
+  is_validated boolean [not null, default: false]
+  saved_at timestamptz
+  validated_at timestamptz
+  validated_by_auditor_id varchar(50) [ref: > auditors.id]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+
+  Indexes {
+    (workspace_id, mission_id, tab_key) [unique]
+  }
+}
+
+Table study_phase_knowledge_cards {
+  id varchar(80) [pk]
+  tab_id uuid [not null, ref: > study_phase_tabs.id]
+  category varchar(120)
+  title varchar(150) [not null]
+  summary text
+  detail text
+  is_ai_generated boolean [not null, default: true]
+  display_order int [not null, default: 0]
+
+  Indexes {
+    (tab_id, display_order)
+  }
+}
+
+Table study_phase_documents {
+  id varchar(80) [pk]
+  tab_id uuid [not null, ref: > study_phase_tabs.id]
+  file_name varchar(255) [not null]
+  file_size_bytes bigint
+  added_at timestamptz [not null]
+}
+
+Table study_phase_notes {
+  id varchar(80) [pk]
+  tab_id uuid [not null, ref: > study_phase_tabs.id]
+  author_auditor_id varchar(50) [ref: > auditors.id]
+  author_name varchar(150) [not null]
+  content text [not null]
+  created_at timestamptz [not null]
+}
+
+Table risk_register_items {
+  id varchar(80) [pk]
+  tab_id uuid [not null, ref: > study_phase_tabs.id]
+  code varchar(50) [not null]
+  auditable_object varchar(180)
+  auditable_sub_object varchar(180)
+  risk_title text [not null]
+  operational_control_objective text
+  risk_assessment final_risk_assessment [not null]
+  impact risk_impact [not null]
+  probability smallint [not null]
+  priority risk_priority [not null]
+  good_practices text [note: 'Mappe le champ controlMeasure du front actuel']
+  decision_status risk_decision_status [not null, default: 'brouillon']
+  sort_order int [not null, default: 0]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+
+  Indexes {
+    (tab_id, code) [unique]
+    (tab_id, sort_order)
+    (tab_id, decision_status)
+  }
+}
+
+Table tari_final_items {
+  id varchar(80) [pk]
+  tab_id uuid [not null, ref: > study_phase_tabs.id]
+  code varchar(50) [not null]
+  auditable_object varchar(180)
+  auditable_sub_object varchar(180)
+  risk_title text [not null]
+  operational_control_objective text
+  risk_assessment final_risk_assessment [not null]
+  impact risk_impact [not null]
+  probability smallint [not null]
+  good_practices text [note: 'Mappe le champ controlMeasure du front actuel']
+  sort_order int [not null, default: 0]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+
+  Indexes {
+    (tab_id, code) [unique]
+    (tab_id, sort_order)
+  }
+}
+
+Table audit_test_program_items {
+  id varchar(80) [pk]
+  tab_id uuid [not null, ref: > study_phase_tabs.id]
+  test_number varchar(50) [not null]
+  task text [not null, note: 'Correspond a controlDescription puis Tache dans le front']
+  objective text
+  methodology text
+  auditor_id varchar(50) [ref: > auditors.id]
+  auditor_name varchar(150)
+  status test_status [not null]
+  start_date date [not null]
+  end_date date [not null]
+  comments text
+  action_label text [note: 'Champ historique encore present dans l etat front']
+  is_non_conformity boolean [not null, default: false]
+  sort_order int [not null, default: 0]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+
+  Indexes {
+    (tab_id, test_number) [unique]
+    (tab_id, sort_order)
+    (tab_id, status)
+  }
+}
+
+Table orientation_reports {
+  id uuid [pk]
+  workspace_id uuid [not null, ref: > workspaces.id]
+  mission_id varchar(50) [ref: > missions.id]
+  tab_id uuid [unique, ref: > study_phase_tabs.id, note: 'Relie la page Rapport a l onglet orientation_report']
+  mission_label varchar(180)
+  mission_reference varchar(80)
+  writer_name varchar(150)
+  version_label varchar(50)
+  report_date date
+  started_at date
+  entity varchar(150)
+  urgency orientation_urgency
+  scope jsonb [note: 'Liste des perimetres coches']
+  objective text
+  metrics text
+  characteristics text
+  expected_benefits text
+  auditee_concerns text
+  exclusions text
+  mission_lead_name varchar(150)
+  mission_supervisor_name varchar(150)
+  is_validated boolean [not null, default: false]
+  saved_at timestamptz
+  validated_at timestamptz
+  validated_by_auditor_id varchar(50) [ref: > auditors.id]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+}
+
+Table orientation_report_objectives {
+  id varchar(80) [pk]
+  orientation_report_id uuid [not null, ref: > orientation_reports.id]
+  domain varchar(180)
+  objective text [not null]
+  control_criteria text
+  associated_risk text
+  sort_order int [not null, default: 0]
+
+  Indexes {
+    (orientation_report_id, sort_order)
+  }
+}
+
+Table nav_items_snapshot {
+  id uuid [pk]
+  workspace_id uuid [not null, ref: > workspaces.id]
+  item_key varchar(80) [not null]
+  title varchar(120)
+  icon varchar(80)
+  href varchar(255)
+  parent_item_key varchar(80)
+  display_order int [not null, default: 0]
+  is_enabled boolean [not null, default: true]
+
+  Note: 'Optionnel. Permet de persister la navigation si elle doit devenir configurable en base.'
+}

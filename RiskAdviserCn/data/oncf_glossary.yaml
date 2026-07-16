@@ -1,0 +1,179 @@
+organization:
+  name: "ONCF — Office National des Chemins de Fer"
+  country: "Maroc"
+  sector: "Transport ferroviaire"
+  audit_department: "Direction de l'Audit Interne"
+
+acronyms:
+  PGR: "Plateforme de Gestion des Réclamations (système informatique de suivi des réclamations clients)"
+  GMAO: "Gestion de Maintenance Assistée par Ordinateur (système de gestion des interventions de maintenance)"
+  ACT: "Agent Commercial Train (personnel embarqué chargé de l'accueil et du service aux voyageurs)"
+  DA: "Directeur d'Axe (responsable d'une ligne ferroviaire)"
+  PV: "Procès-Verbal (document officiel de constat ou de réunion)"
+  PN: "Passage à Niveau — croisement voie ferrée / route, sujet de sécurité critique"
+  ETCS: "European Train Control System (système de contrôle automatique des trains)"
+  KPI: "Key Performance Indicator (indicateur clé de performance)"
+  LGV: "Ligne à Grande Vitesse — Infrastructure ferroviaire dédiée aux trains à grande vitesse. La LGV Tanger–Casablanca est la 1ère en Afrique. Projet LGV Kénitra–Marrakech en cours de réalisation."
+  TGV: "Train à Grande Vitesse — Matériel roulant pour grandes vitesses. Technologie Alstom exploitée sur la LGV marocaine sous le nom commercial Al Boraq."
+  TNR: "Train Navette Rapide — Service de trains régionaux rapides assurant des liaisons métropolitaines et inter-villes (ex. Casablanca–Rabat–Kénitra). Offre revitalisée en 2023."
+  PKM: "Passager-Kilomètre — Unité de mesure du trafic voyageurs : 1 passager transporté sur 1 km = 1 PKM. Indicateur clé de performance de l'activité voyageurs."
+  RFN: "Réseau Ferré National — Ensemble des lignes et infrastructures ferroviaires exploitées par l'ONCF sur le territoire marocain (environ 2 110 km de voies)."
+  RGVM: "Rames à Grande Vitesse Marocaines — Nouvelles rames acquises pour la LGV. Autorisation de mise en exploitation commerciale accordée entre Casa Voyageurs et Marrakech en 2023. Essais validés sur la ligne classique."
+  Al_Boraq: "Train à Grande Vitesse marocain — Train à grande vitesse reliant Casablanca à Tanger (environ 2h10). 1er TGV d'Afrique, inauguré en 2018. En 2023, il fête sa 5ème année avec une croissance remarquable du trafic."
+  Al_Atlas: "Train intercités express — Train intercités à tarification modulaire, similaire au concept Al Boraq pour les liaisons inter-villes classiques."
+  ERTMS: "European Rail Traffic Management System — Système de gestion du trafic ferroviaire et de signalisation."
+  GSM_R: "Global System for Mobile communications Railways — Réseau radio numérique dédié aux communications ferroviaires."
+  DBC: "Détection de Boîtes Chaudes — Système de détection thermique permettant de repérer des échauffements anormaux sur les essieux."
+
+fret_et_logistique:
+  EVP: "Équivalent Vingt Pieds — Unité standard de mesure des conteneurs maritimes (1 EVP = conteneur 20 pieds). En 2023, Tanger Med a traité 8,6 millions d'EVP."
+  KT: "Kilotonne — Unité de mesure des volumes de fret (1 KT = 1 000 tonnes)."
+  TKM: "Tonne-Kilomètre — Unité de mesure du trafic fret : 1 tonne transportée sur 1 km = 1 TKM."
+  TSP: "Triple Superphosphate — Type d'engrais chimique produit et exporté par l'OCP, transporté par train depuis les usines de Safi."
+  BTP: "Bâtiment et Travaux Publics — Segment fret regroupant le ciment, les matériaux de construction et les aciers."
+  MITA: "Moroccan Intermodal Terminal Ain Sebaa — Port sec ONCF à Casablanca relié au port de Tanger Med. Traite les trafics de conteneurs EVP, véhicules et marchandises diverses. CA 2023 : 42 M DH."
+  HTT: "Hub Terminal Tanger Med (Dépôt Hydrocarbures) — Point de départ du trafic fuel OCP depuis le terminal pétrolier de Tanger Med vers les centres de Khouribga. Volume 2023 : 146 KT (+96%)."
+  SEJ: "Station d'Expédition de Jorf Lasfar — Pôle logistique de départ des trafics OCP (phosphates, engrais) et ONEE (charbon). Volume 2023 : 312 KT."
+  OCP: "Office Chérifien des Phosphates — Principal client fret de l'ONCF."
+  ONEE: "Office National de l'Électricité et de l'Eau Potable — Client fret majeur pour le transport de charbon et de fuel."
+
+finance:
+  EBITDA: "Earnings Before Interest, Taxes, Depreciation & Amortization — Excédent brut d'exploitation (EBE). En 2023, l'ONCF a dégagé un EBITDA de 1,6 milliard de DH."
+  CAF: "Capacité d'Autofinancement — CAF 2023 : 255 802 060,46 DH."
+  MDH: "Millions de Dirhams — Unité monétaire utilisée pour les agrégats financiers."
+  DH: "Dirham — Monnaie nationale marocaine (MAD)."
+  CAPEX: "Capital Expenditures — Dépenses d'investissement en infrastructures, matériel roulant et systèmes."
+  OPEX: "Operating Expenditures — Dépenses opérationnelles courantes."
+
+organisation:
+  ONCF: "Office National des Chemins de Fer — Établissement public marocain, opérateur ferroviaire national."
+  EPIC: "Établissement Public à Caractère Industriel et Commercial — Statut juridique de l'ONCF."
+  UIC: "Union Internationale des Chemins de Fer — L'ONCF préside l'UIC–région Afrique."
+  PPLGV: "Pôle Projets LGV — Direction interne en charge des projets LGV (ex. Kénitra–Marrakech)."
+  RSE: "Responsabilité Sociétale des Entreprises — Stratégie ESG de l'ONCF."
+  IDMAJE: "Intégration, Durabilité, Management, Action, Juste-à-temps, Excellence — Programme d'excellence opérationnelle (SMI)."
+
+securite_qualite:
+  SEF: "Sécurité d'Exploitation Ferroviaire — Pilier réglementaire des circulations ferroviaires."
+  SST: "Santé et Sécurité au Travail — Politique de prévention des risques professionnels."
+  SMI: "Système de Management Intégré — Dispositif IDMAJE regroupant qualité, SEF, SST et environnement."
+  ISO: "International Organization for Standardization — L'ONCF est certifié sur plusieurs référentiels ISO (ISO 9001, ISO 14001, ISO 45001)."
+  MASCIR: "Moroccan Foundation for Advanced Science, Innovation and Research — Partenaire pour la vidéosurveillance des PN."
+  GES: "Gaz à Effet de Serre — Émissions CO₂ et autres gaz climatiques suivis dans le bilan carbone."
+
+filiales:
+  - "SMTR CARRE: Société Marocaine de Transport Routier CARRE — Filiale transport routier du groupe ONCF."
+  - "SUPRATOURS: Supratours Travel — Filiale voyageurs (transport routier et agences de voyages)."
+  - "INFRAWAY: Infraway — Filiale spécialisée en ingénierie et maintenance des infrastructures ferroviaires."
+  - "SBM: Société de Billetterie et de Marketing — Filiale dédiée à la commercialisation et distribution des titres de transport."
+  - "IFF: Immobilier, Foncier et Filiales — Entité gérant le patrimoine foncier et participations."
+  - "SIANA: Société SIANA — Filiale ayant contribué au fonds de solidarité post-séisme d'Al Haouz en 2023."
+
+complaint_channels:
+  - "Guichet en gare"
+  - "Numéro vert (service client téléphonique)"
+  - "Email réclamations"
+  - "Application mobile ONCF"
+  - "Réseaux sociaux (Facebook, Twitter)"
+  - "Formulaire site web oncf.ma"
+  - "Courrier postal"
+
+main_stations:
+  - "Casa-Voyageurs"
+  - "Casa-Port"
+  - "Rabat-Ville"
+  - "Rabat-Agdal"
+  - "Kénitra"
+  - "Fès"
+  - "Marrakech"
+  - "Tanger"
+  - "Oujda"
+  - "Meknès"
+
+main_lines:
+  - "Axe Casablanca-Kénitra (navette à forte rotation)"
+  - "Axe Casablanca-Marrakech"
+  - "Axe Casa-Tanger (LGV Al Boraq)"
+  - "Axe Casablanca-Oujda"
+
+regulatory_deadlines:
+  reclamation_response: "30 jours ouvrables (délai réglementaire de réponse aux réclamations)"
+  lettre_attente: "72 heures (délai d'envoi de la lettre d'attente)"
+  escalade: "5 jours ouvrables (délai d'escalade si non-réponse de l'entité)"
+
+standards:
+  - "ISO 9001 (Management de la qualité)"
+  - "ITIL (gestion des services)"
+  - "APQC (référentiel de processus)"
+  - "Règlement intérieur ONCF"
+  - "Cahier des charges contractuels voyageurs"
+  - "Réglementation ONDA/ONCF sur la sécurité ferroviaire"
+
+risk_types:
+  - "Risque d'exécution (non-réalisation ou réalisation incorrecte d'une tâche)"
+  - "Risque de qualité (output ne respectant pas les standards attendus)"
+  - "Risque de conformité (non-respect de procédures, délais ou réglementations)"
+  - "Risque de communication (information mal transmise, incomplète ou absente)"
+  - "Risque de contrôle (absence ou défaillance d'un mécanisme de vérification)"
+  - "Risque de traçabilité (absence de preuve ou de documentation)"
+  - "Risque de gouvernance (flou dans les rôles et responsabilités)"
+
+internal_entities:
+  - "Direction Commerciale"
+  - "Direction des Opérations"
+  - "Direction Technique et Maintenance"
+  - "Direction des Systèmes d'Information"
+  - "Direction Qualité"
+  - "Direction des Ressources Humaines"
+  - "Direction Financière"
+  - "Agences régionales"
+
+# Cartographie officielle des processus ONCF
+familles_processus:
+  Management:
+    M1: "Stratégie et Ressources"
+    M2: "Organisation"
+    M3: "Gouvernance"
+    M4: "Performance et Amélioration Continue"
+    M5: "Sécurité et Sûreté Ferroviaire"
+  Realisation:
+    R1: "Infrastructure Réseau"
+    R2: "Gérer le Matériel Roulant"
+    R3: "Patrimoine M/IM"
+    R4: "Commercial Voyageurs"
+    R5: "Commercial Phosphates"
+    R6: "Commercial Fret et Logistique"
+    R7: "Exploitation"
+  Support:
+    S1: "Gestion des RH"
+    S2: "Gestion des SI et transformation digitale"
+    S3: "Achats & Approvisionnement"
+    S4: "Communication"
+    S5: "Finances et comptabilité"
+    S6: "Juridique"
+
+# Few-shot examples — risques réels extraits des TaRi ONCF
+few_shot_risks:
+  - objet: "Réception des réclamations"
+    sous_objet: "Enregistrement sur la PGR"
+    risque: "Réclamation non saisie ou saisie incomplète (ex: réclamations verbales remontées par les ACT dans leurs rapports circonstanciels)"
+    bonne_pratique: "Contrôle journalier et checklist de saisie obligatoire"
+    objectif_controle: "Assurer l'exhaustivité et la fiabilité de l'enregistrement des réclamations"
+
+  - objet: "Traitement initial"
+    sous_objet: "Respect des délais"
+    risque: "Non-respect des délais de traitement réglementaires des réclamations clients"
+    bonne_pratique: "Alerte automatique dans le cas de dépassement de délai via la PGR"
+    objectif_controle: "Garantir le traitement des réclamations dans les délais définis"
+
+  - objet: "Pré-crise (Anticipation)"
+    sous_objet: "Plan de communication de crise"
+    risque: "Improvisation en cas de crise — absence de scénarios types (dark sites) pré-rédigés et obsolescence des procédures face aux nouveaux canaux (réseaux sociaux)"
+    bonne_pratique: "Plan validé, diffusé et accessible — manuel de crise disponible en formats numérique et physique (papier)"
+    objectif_controle: "Disposer d'un plan de communication de crise formalisé et opérationnel"
+
+  - objet: "Enquête / Escalade"
+    sous_objet: "Rôle des entités"
+    risque: "Flou dans la répartition des responsabilités entre entités lors du traitement des réclamations"
+    bonne_pratique: "Définir une matrice RACI claire dans la procédure + rappeler les responsabilités dans chaque atelier de sensibilisation"
+    objectif_controle: "Clarifier les rôles et responsabilités de chaque entité impliquée"

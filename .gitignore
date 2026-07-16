@@ -1,0 +1,78 @@
+# Node / frontend
+node_modules/
+.next/
+out/
+build/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+venv_*/
+env/
+ENV/
+env.bak/
+venv.bak/
+*.egg-info/
+*.egg
+.eggs/
+
+# .NET
+bin/
+obj/
+.vs/
+
+# Git / IDE
+.git/
+.idea/
+.vscode/
+
+# OS / temp
+.DS_Store
+Thumbs.db
+*.log
+tmp/
+temp/
+
+# Secrets / local config
+.env
+.env.*
+!.env.example
+*.pem
+*.pfx
+secrets.json
+backend/AuditFlow.API/appsettings.json
+backend/AuditFlow.API/appsettings.Development.json
+appsettings.*.local.json
+
+# Local tooling
+.vercel/
+.pnp/
+.chrome-pdf-profile/
+.sources/
+
+# ===== AJOUTÉ POUR LES VENV =====
+venv/
+venv_*/
+venv_knowledge/
+venv_verification/
+RiskAdviserCn/venv/
+Knowledge_API/venv_knowledge/
+Verification-API/venv_verification/
+
+# Caches et outputs IA
+RiskAdviserCn/output/
+Knowledge_API/cache/
+Verification-API/cache/
+
+# Fichiers compilés Python
+*.pyc
+*.pyo
+*.pyd

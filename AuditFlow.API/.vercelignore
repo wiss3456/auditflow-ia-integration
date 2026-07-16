@@ -1,0 +1,9 @@
+.dotnet
+backend/.dotnet-cli
+backend/.vs
+backend/**/bin
+backend/**/obj
+backend/**/temp-build
+backend/**/temp-build-2
+backend/temp-verify
+backend/temp-verify-20260601

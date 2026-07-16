@@ -1,0 +1,867 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Diagramme de classes AuditFlow</title>
+    <style>
+      :root {
+        --bg: #f6f7fb;
+        --card: #ffffff;
+        --text: #18202f;
+        --muted: #5b6476;
+        --border: #d7dcea;
+        --primary: #4f46e5;
+        --secondary: #0f766e;
+        --danger: #c2410c;
+        --shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Segoe UI", Arial, sans-serif;
+      }
+
+      .page {
+        width: 1120px;
+        min-height: 720px;
+        margin: 0 auto;
+        padding: 32px 38px 28px;
+        page-break-after: always;
+      }
+
+      .page:last-child {
+        page-break-after: auto;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      .hero {
+        background: linear-gradient(135deg, #eef2ff 0%, #ffffff 100%);
+        border: 1px solid var(--border);
+        border-radius: 22px;
+        box-shadow: var(--shadow);
+        padding: 28px 30px;
+      }
+
+      .hero h1 {
+        color: #111827;
+        font-size: 30px;
+        line-height: 1.15;
+      }
+
+      .hero p {
+        color: var(--muted);
+        font-size: 15px;
+        line-height: 1.7;
+        margin-top: 10px;
+      }
+
+      .legend {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 18px;
+      }
+
+      .pill {
+        border-radius: 999px;
+        color: #1f2937;
+        display: inline-flex;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 8px 12px;
+      }
+
+      .pill.primary {
+        background: #e0e7ff;
+      }
+
+      .pill.secondary {
+        background: #ccfbf1;
+      }
+
+      .pill.warning {
+        background: #ffedd5;
+      }
+
+      .pill.neutral {
+        background: #e5e7eb;
+      }
+
+      .section-head {
+        align-items: baseline;
+        display: flex;
+        gap: 14px;
+        margin-bottom: 18px;
+      }
+
+      .section-head h2 {
+        font-size: 24px;
+      }
+
+      .section-head span {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .diagram-grid {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .class-box {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        box-shadow: var(--shadow);
+        padding: 16px 16px 14px;
+      }
+
+      .class-box h3 {
+        color: #111827;
+        font-size: 16px;
+        margin-bottom: 8px;
+      }
+
+      .class-box .type {
+        color: var(--primary);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .class-box ul {
+        color: #334155;
+        font-size: 12px;
+        line-height: 1.55;
+        margin: 10px 0 0;
+        padding-left: 16px;
+      }
+
+      .class-box li + li {
+        margin-top: 3px;
+      }
+
+      .relations {
+        background: #ffffff;
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        box-shadow: var(--shadow);
+        margin-top: 18px;
+        padding: 18px 20px;
+      }
+
+      .relations h3 {
+        color: #111827;
+        font-size: 15px;
+        margin-bottom: 10px;
+      }
+
+      .relations ul {
+        color: #334155;
+        columns: 2;
+        font-size: 13px;
+        line-height: 1.65;
+        margin: 0;
+        padding-left: 18px;
+      }
+
+      .relations li {
+        break-inside: avoid;
+        margin-bottom: 5px;
+      }
+
+      .mono {
+        background: #0f172a;
+        border-radius: 18px;
+        color: #e2e8f0;
+        font-family: Consolas, "Courier New", monospace;
+        font-size: 11px;
+        line-height: 1.48;
+        overflow: hidden;
+        padding: 22px 24px;
+        white-space: pre-wrap;
+      }
+
+      .two-col {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: 1.05fr 0.95fr;
+      }
+
+      .summary-card {
+        background: #ffffff;
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        box-shadow: var(--shadow);
+        padding: 18px 20px;
+      }
+
+      .summary-card h3 {
+        font-size: 16px;
+        margin-bottom: 10px;
+      }
+
+      .summary-card p,
+      .summary-card li {
+        color: #334155;
+        font-size: 13px;
+        line-height: 1.7;
+      }
+
+      .summary-card ul {
+        margin: 0;
+        padding-left: 18px;
+      }
+    </style>
+  </head>
+  <body>
+    <section class="page">
+      <div class="hero">
+        <h1>Diagramme de classes AuditFlow</h1>
+        <p>
+          Vue complete de l'application ONCF d'audit interne : objets metier, relations de composition,
+          stockage partage, services, contextes React et ecrans principaux.
+        </p>
+        <div class="legend">
+          <span class="pill primary">Entites metier</span>
+          <span class="pill secondary">Etat partage et persistance</span>
+          <span class="pill warning">Pages et modules fonctionnels</span>
+          <span class="pill neutral">Contextes et services transverses</span>
+        </div>
+      </div>
+
+      <div class="section-head" style="margin-top: 28px">
+        <span>Bloc 1</span>
+        <h2>Metier et espace partage</h2>
+      </div>
+
+      <div class="diagram-grid">
+        <article class="class-box">
+          <div class="type">Entite</div>
+          <h3>User</h3>
+          <ul>
+            <li>id, name, avatar, email</li>
+            <li>firstName, lastName</li>
+            <li>role, username, department</li>
+          </ul>
+        </article>
+
+        <article class="class-box">
+          <div class="type">Entite</div>
+          <h3>AuditorAccount</h3>
+          <ul>
+            <li>heritage de User</li>
+            <li>password</li>
+            <li>email, username</li>
+            <li>department, role</li>
+          </ul>
+        </article>
+
+        <article class="class-box">
+          <div class="type">Entite</div>
+          <h3>StoredProfile</h3>
+          <ul>
+            <li>avatar, email</li>
+            <li>firstName, lastName</li>
+            <li>jobTitle, phone</li>
+            <li>city, region, country, timezone</li>
+          </ul>
+        </article>
+
+        <article class="class-box">
+          <div class="type">Entite</div>
+          <h3>AuditMission</h3>
+          <ul>
+            <li>id, title, client, site</li>
+            <li>owner, scope, objective</li>
+            <li>phase, status, priority</li>
+            <li>progress, dueDate</li>
+            <li>openFindings, nextAction</li>
+          </ul>
+        </article>
+
+        <article class="class-box">
+          <div class="type">Entite</div>
+          <h3>MissionTemplate</h3>
+          <ul>
+            <li>id, title, description</li>
+            <li>defaultEntity, duration</li>
+            <li>focusAreas, deliverables</li>
+            <li>kickoffChecklist</li>
+            <li>recommendedTeam, useCase</li>
+          </ul>
+        </article>
+
+        <article class="class-box">
+          <div class="type">Entite</div>
+          <h3>WorkspaceFollowUpAction</h3>
+          <ul>
+            <li>id, title, description</li>
+            <li>recommendationNumber</li>
+            <li>recommendation, actionDetail</li>
+            <li>owner, missionId</li>
+            <li>status, evaluation</li>
+            <li>startDate, endDate, deadline</li>
+            <li>remarks</li>
+          </ul>
+        </article>
+
+        <article class="class-box">
+          <div class="type">Etat partage</div>
+          <h3>WorkspaceState</h3>
+          <ul>
+            <li>missions: AuditMission[]</li>
+            <li>archives: AuditMission[]</li>
+            <li>followUpActions: WorkspaceFollowUpAction[]</li>
+            <li>studyPhaseState</li>
+            <li>orientationReportState</li>
+            <li>version</li>
+          </ul>
+        </article>
+
+        <article class="class-box">
+          <div class="type">Service</div>
+          <h3>WorkspaceStorageService</h3>
+          <ul>
+            <li>loadWorkspaceState()</li>
+            <li>persistWorkspaceState()</li>
+            <li>updateWorkspaceState()</li>
+            <li>saveWorkspaceMission()</li>
+            <li>deleteWorkspaceMission()</li>
+            <li>saveWorkspaceFollowUpActions()</li>
+            <li>saveWorkspaceStudyPhaseState()</li>
+            <li>saveWorkspaceOrientationReportState()</li>
+          </ul>
+        </article>
+
+        <article class="class-box">
+          <div class="type">Enumeration</div>
+          <h3>Enums principaux</h3>
+          <ul>
+            <li>MissionStatus</li>
+            <li>MissionPriority</li>
+            <li>WorkspaceFollowUpStatus</li>
+            <li>WorkspaceFollowUpEvaluation</li>
+          </ul>
+        </article>
+      </div>
+
+      <div class="relations">
+        <h3>Relations clefs</h3>
+        <ul>
+          <li>AuditorAccount herite de User.</li>
+          <li>StoredProfile enrichit User via ProfileStorageService.</li>
+          <li>WorkspaceState compose missions, archives et followUpActions.</li>
+          <li>WorkspaceFollowUpAction pointe optionnellement vers AuditMission via missionId.</li>
+          <li>WorkspaceStorageService centralise toutes les mises a jour partagees.</li>
+          <li>saveWorkspaceMission synchronise automatiquement missions et archives.</li>
+          <li>deleteWorkspaceMission supprime aussi les actions de suivi liees.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="page">
+      <div class="section-head">
+        <span>Bloc 2</span>
+        <h2>Phase d'etude et rapport</h2>
+      </div>
+
+      <div class="diagram-grid">
+        <article class="class-box">
+          <div class="type">Etat</div>
+          <h3>StudyState</h3>
+          <ul>
+            <li>knowledge: TabState</li>
+            <li>riskListing: TabState</li>
+            <li>finalTalk: TabState</li>
+            <li>auditPlanning: TabState</li>
+            <li>orientationReport: TabState</li>
+          </ul>
+        </article>
+
+        <article class="class-box">
+          <div class="type">Etat</div>
+          <h3>TabState</h3>
+          <ul>
+            <li>documents: DocItem[]</li>
+            <li>notes: NoteItem[]</li>
+            <li>riskRows: RiskRow[]</li>
+            <li>finalTalkRows: FinalTalkRow[]</li>
+            <li>auditTests: AuditTestRow[]</li>
+            <li>orientationReport</li>
+            <li>isGenerated, isValidated</li>
+            <li>savedAt, validatedAt, validatedBy</li>
+          </ul>
+        </article>
+
+        <article class="class-box">
+          <div class="type">Objet</div>
+          <h3>CardDef</h3>
+          <ul>
+            <li>id, title, category</li>
+            <li>summary, detail</li>
+          </ul>
+        </article>
+
+        <article class="class-box">
+          <div class="type">Objet</div>
+          <h3>DocItem</h3>
+          <ul>
+            <li>id, name, size, addedAt</li>
+          </ul>
+        </article>
+
+        <article class="class-box">
+          <div class="type">Objet</div>
+          <h3>NoteItem</h3>
+          <ul>
+            <li>id, author, content, createdAt</li>
+          </ul>
+        </article>
+
+        <article class="class-box">
+          <div class="type">Objet</div>
+          <h3>RiskRow</h3>
+          <ul>
+            <li>code</li>
+            <li>auditableObject</li>
+            <li>auditableSubObject</li>
+            <li>risk</li>
+            <li>operationalControlObjective</li>
+            <li>riskAssessment, impact</li>
+            <li>probability, priority</li>
+            <li>controlMeasure</li>
+            <li>decisionStatus</li>
+          </ul>
+        </article>
+
+        <article class="class-box">
+          <div class="type">Objet</div>
+          <h3>FinalTalkRow</h3>
+          <ul>
+            <li>code</li>
+            <li>auditableObject</li>
+            <li>auditableSubObject</li>
+            <li>title</li>
+            <li>operationalControlObjective</li>
+            <li>riskAssessment, impact</li>
+            <li>probability</li>
+            <li>controlMeasure / bonnes pratiques</li>
+          </ul>
+        </article>
+
+        <article class="class-box">
+          <div class="type">Objet</div>
+          <h3>AuditTestRow</h3>
+          <ul>
+            <li>testNumber</li>
+            <li>controlDescription</li>
+            <li>objective, methodology</li>
+            <li>auditor, status</li>
+            <li>startDate, endDate</li>
+            <li>comments, action</li>
+            <li>isNonConformity</li>
+          </ul>
+        </article>
+
+        <article class="class-box">
+          <div class="type">Objet</div>
+          <h3>OrientationReportData</h3>
+          <ul>
+            <li>missionLabel, missionReference</li>
+            <li>writer, version, reportDate</li>
+            <li>missionLead, missionSupervisor</li>
+            <li>objective, entity, urgency</li>
+            <li>scope, metrics, characteristics</li>
+            <li>expectedBenefits, auditeeConcerns</li>
+            <li>exclusions</li>
+            <li>objectiveRows[]</li>
+          </ul>
+        </article>
+
+        <article class="class-box">
+          <div class="type">Objet</div>
+          <h3>OrientationObjectiveRow</h3>
+          <ul>
+            <li>domain</li>
+            <li>objective</li>
+            <li>controlCriteria</li>
+            <li>risk</li>
+          </ul>
+        </article>
+
+        <article class="class-box">
+          <div class="type">Etat</div>
+          <h3>OrientationPageState</h3>
+          <ul>
+            <li>orientationReport</li>
+            <li>isValidated</li>
+            <li>savedAt</li>
+            <li>validatedAt</li>
+            <li>validatedBy</li>
+          </ul>
+        </article>
+      </div>
+
+      <div class="relations">
+        <h3>Relations clefs</h3>
+        <ul>
+          <li>StudyState compose cinq TabState.</li>
+          <li>TabState compose DocItem, NoteItem, RiskRow, FinalTalkRow et AuditTestRow.</li>
+          <li>TabState embarque aussi OrientationReportData.</li>
+          <li>RiskRow et FinalTalkRow partagent le meme langage metier du risque.</li>
+          <li>OrientationReportData compose plusieurs OrientationObjectiveRow.</li>
+          <li>StudyPhasePage persiste son etat dans WorkspaceState.studyPhaseState.</li>
+          <li>OrientationReportPage persiste son etat dans WorkspaceState.orientationReportState.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="page">
+      <div class="section-head">
+        <span>Bloc 3</span>
+        <h2>Services, contextes et hooks</h2>
+      </div>
+
+      <div class="two-col">
+        <div>
+          <div class="diagram-grid" style="grid-template-columns: repeat(2, minmax(0, 1fr))">
+            <article class="class-box">
+              <div class="type">Service</div>
+              <h3>AuthClient</h3>
+              <ul>
+                <li>signUp()</li>
+                <li>signInWithPassword()</li>
+                <li>resetPassword()</li>
+                <li>getUser()</li>
+                <li>signOut()</li>
+              </ul>
+            </article>
+
+            <article class="class-box">
+              <div class="type">Service</div>
+              <h3>ProfileStorageService</h3>
+              <ul>
+                <li>createDefaultProfile()</li>
+                <li>loadStoredProfile()</li>
+                <li>saveStoredProfile()</li>
+                <li>mergeUserWithStoredProfile()</li>
+              </ul>
+            </article>
+
+            <article class="class-box">
+              <div class="type">Contexte</div>
+              <h3>UserContextValue</h3>
+              <ul>
+                <li>user</li>
+                <li>error</li>
+                <li>isLoading</li>
+                <li>checkSession()</li>
+              </ul>
+            </article>
+
+            <article class="class-box">
+              <div class="type">Contexte</div>
+              <h3>NotificationsContextValue</h3>
+              <ul>
+                <li>notifications[]</li>
+                <li>addNotification()</li>
+                <li>clearNotifications()</li>
+              </ul>
+            </article>
+
+            <article class="class-box">
+              <div class="type">Contexte</div>
+              <h3>AppLanguageContextValue</h3>
+              <ul>
+                <li>language</li>
+                <li>setLanguage()</li>
+                <li>usage actuel : francais fixe</li>
+              </ul>
+            </article>
+
+            <article class="class-box">
+              <div class="type">Hook</div>
+              <h3>UseWorkspace</h3>
+              <ul>
+                <li>workspace</li>
+                <li>isReady</li>
+                <li>ecoute WORKSPACE_UPDATED_EVENT</li>
+              </ul>
+            </article>
+          </div>
+        </div>
+
+        <div class="summary-card">
+          <h3>Relations fonctionnelles</h3>
+          <ul>
+            <li>AuthClient s'appuie sur AuditorAccount pour valider les acces ONCF.</li>
+            <li>AuthClient reconstruit l'utilisateur via createStoredUser() puis mergeUserWithStoredProfile().</li>
+            <li>UserProvider depend de AuthClient pour charger la session et exposer UserContextValue.</li>
+            <li>NotificationsProvider gere un historique local d'AppNotification.</li>
+            <li>UseWorkspace recharge WorkspaceState a chaque evenement de mise a jour.</li>
+            <li>ProfileStorageService diffuse PROFILE_UPDATED_EVENT pour resynchroniser l'avatar et le profil.</li>
+            <li>AppLanguageProvider conserve une interface de langue mais l'application est verrouillee sur fr.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="page">
+      <div class="section-head">
+        <span>Bloc 4</span>
+        <h2>Pages et navigation</h2>
+      </div>
+
+      <div class="diagram-grid">
+        <article class="class-box">
+          <div class="type">Navigation</div>
+          <h3>Paths</h3>
+          <ul>
+            <li>auth/sign-in, sign-up, reset-password</li>
+            <li>dashboard overview</li>
+            <li>study-phase, follow-up, rapport</li>
+            <li>missions, archives, support</li>
+            <li>notifications, account, settings</li>
+          </ul>
+        </article>
+
+        <article class="class-box">
+          <div class="type">Navigation</div>
+          <h3>NavItemConfig</h3>
+          <ul>
+            <li>key, title, icon, href</li>
+            <li>items[]</li>
+            <li>matcher</li>
+          </ul>
+        </article>
+
+        <article class="class-box">
+          <div class="type">Page</div>
+          <h3>RootPage / SignInForm</h3>
+          <ul>
+            <li>RootPage redirige vers sign-in</li>
+            <li>SignInForm appelle AuthClient</li>
+            <li>ouvre un panneau de selection des missions</li>
+            <li>consomme UseWorkspace et Paths</li>
+          </ul>
+        </article>
+
+        <article class="class-box">
+          <div class="type">Page</div>
+          <h3>DashboardOverviewPage</h3>
+          <ul>
+            <li>consomme UseWorkspace</li>
+            <li>affiche les KPI globaux</li>
+            <li>tableau verification des missions</li>
+            <li>plein ecran du registre</li>
+          </ul>
+        </article>
+
+        <article class="class-box">
+          <div class="type">Page</div>
+          <h3>NewMissionPage</h3>
+          <ul>
+            <li>consomme missionTemplates</li>
+            <li>genere un AuditMission</li>
+            <li>sauvegarde via saveWorkspaceMission()</li>
+            <li>notifie la creation</li>
+          </ul>
+        </article>
+
+        <article class="class-box">
+          <div class="type">Page</div>
+          <h3>MissionsPage / MissionDetailsPage</h3>
+          <ul>
+            <li>lisent workspace.missions</li>
+            <li>ouvrent une mission par id</li>
+            <li>suppriment via deleteWorkspaceMission()</li>
+            <li>emet tent des notifications</li>
+          </ul>
+        </article>
+
+        <article class="class-box">
+          <div class="type">Page</div>
+          <h3>ArchivesPage</h3>
+          <ul>
+            <li>lit workspace.archives</li>
+            <li>ouvre les details mission</li>
+            <li>adapte le texte via AppLanguageContext</li>
+          </ul>
+        </article>
+
+        <article class="class-box">
+          <div class="type">Page</div>
+          <h3>StudyPhasePage</h3>
+          <ul>
+            <li>gere les 5 onglets et leur pagination</li>
+            <li>genere, modifie, valide et sauvegarde</li>
+            <li>persist StudyState</li>
+          </ul>
+        </article>
+
+        <article class="class-box">
+          <div class="type">Page</div>
+          <h3>OrientationReportPage</h3>
+          <ul>
+            <li>lit et edite OrientationReportData</li>
+            <li>calcule la progression</li>
+            <li>persist OrientationPageState</li>
+          </ul>
+        </article>
+
+        <article class="class-box">
+          <div class="type">Page</div>
+          <h3>FollowUpPage</h3>
+          <ul>
+            <li>utilise workspace.followUpActions</li>
+            <li>ajoute, importe, deplace et supprime</li>
+            <li>met a jour le diagramme dynamique</li>
+            <li>persiste les actions de suivi</li>
+          </ul>
+        </article>
+
+        <article class="class-box">
+          <div class="type">Page</div>
+          <h3>Pages transverses</h3>
+          <ul>
+            <li>NotificationsPage</li>
+            <li>SupportPage</li>
+            <li>AccountPage</li>
+            <li>SettingsPage</li>
+          </ul>
+        </article>
+      </div>
+
+      <div class="relations">
+        <h3>Relations clefs</h3>
+        <ul>
+          <li>Paths alimente la navigation laterale et les liens de pages.</li>
+          <li>SignInForm depend de AuthClient et du registre partage des missions.</li>
+          <li>DashboardOverviewPage, MissionsPage, MissionDetailsPage et ArchivesPage lisent AuditMission via WorkspaceState.</li>
+          <li>NewMissionPage ecrit dans WorkspaceState via saveWorkspaceMission().</li>
+          <li>StudyPhasePage ecrit dans studyPhaseState.</li>
+          <li>OrientationReportPage ecrit dans orientationReportState.</li>
+          <li>FollowUpPage lit et ecrit WorkspaceFollowUpAction[] en temps reel.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="page">
+      <div class="section-head">
+        <span>Annexe</span>
+        <h2>Code Mermaid complet</h2>
+      </div>
+
+      <p style="color: #5b6476; font-size: 14px; line-height: 1.7; margin-bottom: 16px">
+        Cette annexe conserve la version textuelle complete du diagramme de classes, utile pour une regeneration
+        automatique dans un outil Mermaid ou pour une maintenance future dans le depot.
+      </p>
+
+      <div class="mono">classDiagram
+direction LR
+
+class User
+class AuditorAccount
+class StoredProfile
+class AppNotification
+class AuditMission
+class MissionTemplate
+class WorkspaceFollowUpAction
+class WorkspaceState
+class WorkspaceStorageService
+class AuthClient
+class ProfileStorageService
+class UserContextValue
+class NotificationsContextValue
+class AppLanguageContextValue
+class UserProvider
+class NotificationsProvider
+class AppLanguageProvider
+class UseWorkspace
+class NavItemConfig
+class Paths
+class CardDef
+class DocItem
+class NoteItem
+class OrientationObjectiveRow
+class OrientationReportData
+class OrientationPageState
+class FinalTalkRow
+class RiskRow
+class AuditTestRow
+class TabState
+class StudyState
+class FollowUpDraft
+class RootPage
+class SignInForm
+class DashboardOverviewPage
+class MissionsPage
+class MissionDetailsPage
+class NewMissionPage
+class ArchivesPage
+class StudyPhasePage
+class OrientationReportPage
+class FollowUpPage
+class NotificationsPage
+class SupportPage
+class AccountPage
+class SettingsPage
+
+AuditorAccount --|> User
+WorkspaceState *-- AuditMission
+WorkspaceState *-- WorkspaceFollowUpAction
+WorkspaceState o-- StudyState
+WorkspaceState o-- OrientationPageState
+WorkspaceFollowUpAction --> AuditMission
+OrientationPageState *-- OrientationReportData
+OrientationReportData *-- OrientationObjectiveRow
+StudyState *-- TabState
+TabState *-- DocItem
+TabState *-- NoteItem
+TabState *-- RiskRow
+TabState *-- FinalTalkRow
+TabState *-- AuditTestRow
+TabState *-- OrientationReportData
+UserProvider --> AuthClient
+AuthClient --> AuditorAccount
+AuthClient --> ProfileStorageService
+ProfileStorageService --> StoredProfile
+NotificationsProvider *-- AppNotification
+UseWorkspace --> WorkspaceStorageService
+SignInForm --> AuthClient
+SignInForm --> UseWorkspace
+DashboardOverviewPage --> UseWorkspace
+MissionsPage --> WorkspaceStorageService
+MissionDetailsPage --> WorkspaceStorageService
+NewMissionPage --> MissionTemplate
+NewMissionPage --> WorkspaceStorageService
+ArchivesPage --> UseWorkspace
+StudyPhasePage --> StudyState
+StudyPhasePage --> WorkspaceStorageService
+OrientationReportPage --> OrientationPageState
+OrientationReportPage --> WorkspaceStorageService
+FollowUpPage --> WorkspaceFollowUpAction
+FollowUpPage --> WorkspaceStorageService
+NavItemConfig --> Paths</div>
+    </section>
+  </body>
+</html>

@@ -1,0 +1,45 @@
+system: |
+  IMPORTANT: You must respond with ONLY a valid JSON array. No introduction, no explanation, no markdown. Your response must start with [ and end with ].
+  Expert audit interne ONCF. Génère des risques d'audit structurés pour PLUSIEURS sous-objets en une seule réponse.
+
+  Vocabulaire ONCF obligatoire :
+  {oncf_terms}
+
+  Exemples de style ONCF :
+  {few_shot_examples}
+
+  RÈGLES :
+  1. Commence par "Risque de..." ou "Risque d'..."
+  2. Un risque = une cause précise + un impact identifiable
+  3. Angles variés : gouvernance, opérationnel, SI, humain, conformité
+  4. objectif_operationnel_controle : verbe d'action (Assurer, Garantir, Vérifier)
+  5. bonne_pratique : concrète, référence outil réel (RACI, KPI, ISO, PGR)
+  6. likelihood : Faible / Modéré / Élevé / Très élevé
+  7. impact : Mineur / Modéré / Majeur / Critique
+  8. evaluation : Faible / Moyen / Élevé / Critique
+  9. JSON valide uniquement — pas de markdown, pas d'explication
+  10. Aucune répétition de cause même reformulée
+  11. sous_objet_auditable doit correspondre EXACTEMENT au libellé fourni en entrée
+
+user: |
+  Mission : {mission}
+  Processus : {libelle_processus}
+
+  Pour chaque sous-objet ci-dessous, génère EXACTEMENT {n_risks} risques DISTINCTS.
+
+  Sous-objets à traiter :
+  {items}
+
+  Retourne un tableau JSON PLAT avec TOUS les risques de tous les sous-objets :
+  [
+    {{
+      "objet_auditable": "...",
+      "sous_objet_auditable": "...",
+      "objectif_operationnel_controle": "...",
+      "risque": "Risque de ...",
+      "bonne_pratique": "...",
+      "likelihood": "...",
+      "impact": "...",
+      "evaluation": "..."
+    }}
+  ]

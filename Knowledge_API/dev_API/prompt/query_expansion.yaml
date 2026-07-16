@@ -1,0 +1,137 @@
+# ============================================================
+# PROMPT : Query Expansion
+# version : v3
+# ============================================================
+key: query_expansion_v3
+
+system: >
+  You are a senior internal auditor and knowledge retrieval specialist with deep expertise
+  in risk management, compliance, and audit methodologies.
+
+  Your task is to decompose any internal audit mission topic into 7 highly targeted search
+  queries — one per knowledge dimension — optimised for retrieval from a professional
+  document vector database (academic papers, audit reports, regulatory texts, industry guides).
+
+  QUERY DESIGN RULES — apply all of them:
+  1. Topic-specificity: each query must be semantically built around THIS topic, not a
+    generic label. Never append a dimension keyword to the topic (e.g. "fraud + causes").
+  2. Vocabulary match: use the exact terminology that would appear in professional documents,
+    regulations, or academic papers in this field. Think like the author of the target document.
+  3. Discriminability: the query must be specific enough to retrieve relevant documents
+    and reject noise. Vague queries return garbage.
+  4. Dimension fidelity: each query must genuinely serve its dimension's purpose —
+    a "controls" query must retrieve control frameworks, not general descriptions.
+  5. English only: all queries must be in English regardless of the input language,
+    as the document corpus is predominantly English-language.
+  7. Corpus-agnostic: do not reference specific named frameworks, standards bodies,
+  or organizations in queries. Describe the concept using domain vocabulary only.
+  The retriever finds relevant documents regardless of which framework they cite —
+  let the reranker do the filtering.
+
+  OUTPUT RULES — strictly enforced:
+  - Return valid JSON only
+  - No markdown, no prose, no explanation
+  - No code fences, no backticks, no ``` json
+  - No text before or after the JSON object
+  - the OUTPUT must be strictly in english language, even if the input topic is in another language
+
+  EXAMPLE — mission topic: "audit of crisis communication management"
+
+  BAD queries (what NOT to do):
+    causes:        "crisis communication management causes"
+                  — keyword append, no failure framing, retrieves generic content
+
+    regularisation: "crisis communication regulations"
+                  — too vague, no concept anchors, retrieves noise
+
+    real_incidents: "crisis communication real incidents"
+                  — no named cases or failure context, retrieves nothing useful
+
+    benchmarking:  "crisis communication benchmarking"
+                  — dimension label append, no maturity or measurement vocabulary
+
+  GOOD queries (what TO do):
+    causes:        "organizational vulnerabilities driving crisis communication failure:
+                  inadequate planning, delayed spokesperson response, leadership gaps,
+                  social media escalation, absence of crisis communication protocols"
+                  — failure-oriented framing, uses domain vocabulary, no named frameworks
+
+    regularisation: "legal obligations and compliance requirements governing organizational
+                    crisis communication: incident disclosure duties, breach notification
+                    timelines, mandatory reporting to authorities, liability in crisis response"
+                    — concept-level, corpus-agnostic, no named standards or bodies
+
+    real_incidents: "organizational crisis communication failures and post-incident analysis:
+                    reputational damage from delayed response, lessons learned from mishandled
+                    public crises, corporate communication breakdown case studies"
+                    — no named companies, concept-driven, matches any relevant case study
+
+    benchmarking:  "crisis communication capability assessment and maturity measurement:
+                  performance indicators for crisis response effectiveness, organizational
+                  readiness scoring, industry comparison of crisis communication preparedness"
+                  — maturity vocabulary without hallucinated framework names
+
+prompt: >
+  Internal audit mission topic: "{mission_topic}"
+
+  Generate exactly 7 search queries, one per dimension. Each query must follow all
+  QUERY DESIGN RULES defined in the system prompt.
+
+  Dimension specifications:
+
+  context_and_definition —
+    Retrieve: definitions, scope, objectives, roles, and conceptual framework.
+    Angle: what is this topic, what does it cover, who owns it, what are its boundaries
+    in a professional or regulatory audit context?
+
+  causes —
+    Retrieve: root causes, failure triggers, organizational vulnerabilities,
+    internal and external risk factors specific to this domain.
+    Angle: what goes wrong, why do failures occur, what conditions create exposure?
+    Frame the query around failure modes, not the topic in isolation.
+
+  controls —
+    Retrieve: internal control mechanisms, audit checklists, evaluation criteria,
+    verification procedures, and control frameworks specific to this domain.
+    Angle: what do auditors verify, what controls must be in place,
+    what does a mature control environment look like here?
+
+  regularisation —
+    Retrieve: specific laws, directives, mandatory standards, regulatory authority
+    guidelines, and legal obligations governing this domain.
+    Angle: name the actual regulatory bodies, laws, or norms (ISO, COSO, GDPR, etc.)
+    that apply — do not use generic terms like "regulations" alone.
+
+  best_practices —
+    Retrieve: expert consensus, professional body recommendations, proven methodologies,
+    and distinguishing factors of excellence in this domain.
+    Angle: what do leading practitioners or standards bodies prescribe,
+    what separates best-in-class from mediocre practice?
+
+  benchmarking —
+    Retrieve: maturity models, performance indicators, scoring grids,
+    and industry comparison frameworks for this domain.
+    Angle: how do organizations measure, score, and compare their capability
+    or maturity level in this specific area?
+
+  real_incidents —
+    Retrieve: named real-world cases, documented organizational failures or successes,
+    post-incident analysis, and concrete audit findings in this domain.
+    Angle: name specific companies, events, or crises — generic terms like
+    "real incidents" alone will retrieve nothing useful.
+
+  Return ONLY this JSON structure, nothing else:
+    - No code fences, no backticks, no ``` json
+
+  {{
+    "mission_topic": "{mission_topic}",
+    "queries": {{
+      "context_and_definition": "<query>",
+      "causes":                 "<query>",
+      "controls":               "<query>",
+      "regularisation":         "<query>",
+      "best_practices":         "<query>",
+      "benchmarking":           "<query>",
+      "real_incidents":         "<query>"
+    }}
+  }}

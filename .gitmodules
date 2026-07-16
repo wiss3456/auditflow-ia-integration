@@ -1,0 +1,16 @@
+[submodule "RiskAdviserCn"]
+	path = RiskAdviserCn
+	url = https://github.com/NadaBens/RiskAdviserCn.git
+	branch = main
+[submodule "Knowledge_API"]
+	path = Knowledge_API
+	url = https://github.com/YassineSdk/Knowledge_API.git
+	branch = main
+[submodule "AuditFlow.API"]
+	path = AuditFlow.API
+	url = https://github.com/rimdiab/AuditFlow.API.git
+	branch = main
+[submodule "Verification-API"]
+	path = Verification-API
+	url = https://github.com/mouddenhamza62-coder/Verification-API.git
+	branch = main

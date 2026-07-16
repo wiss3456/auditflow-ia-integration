@@ -1,0 +1,116 @@
+# data/process_taxonomy.yaml
+#
+# POURQUOI CE FICHIER EXISTE :
+#   C'est le cerveau de la décomposition. Car Groq va inventer des
+#   objets auditables génériques. Maintenant  il va utiliser exactement les
+#   phases métier ONCF  en se basant  sur mes TaRi excels.
+#
+# COMMENT IL EST UTILISÉ :
+#   context_loader.py lit ce fichier à chaque requête.
+#   Il détecte le type de mission via les keywords.
+#   Il injecte les objets_auditables dans le prompt de décomposition.
+
+
+missions:
+
+  - type: "traitement_reclamations_clients"
+    keywords: [réclamation, reclamation, plainte, client, PGR]
+    famille_processus: "Réalisation"
+    code_processus: "R4"
+    libelle_processus: "R4 — Commercial Voyageurs"
+    objets_auditables:
+      - label: "Réception des réclamations"
+        sous_objets: ["Enregistrement sur la PGR", "Connaissance des canaux de réclamation", "Canaux de réception"]
+      - label: "Traitement initial"
+        sous_objets: ["Analyse et qualification", "Envoi d'une lettre d'attente au client", "Respect des délais"]
+      - label: "Enquête / Escalade"
+        sous_objets: ["Orientation de la réclamation", "Transmission à l'entité concernée", "Qualité du retour des entités", "Rôle des entités"]
+      - label: "Réponse au client"
+        sous_objets: ["Qualité de la réponse", "Délai de réponse"]
+      - label: "Clôture de la réclamation"
+        sous_objets: ["Preuve de traitement", "Validation de clôture"]
+      - label: "Suivi et Reporting"
+        sous_objets: ["Reporting", "Indicateurs de performance"]
+      - label: "Amélioration continue"
+        sous_objets: ["Capitalisation sur les réclamations récurrentes", "Satisfaction client"]
+
+  - type: "communication_de_crise"
+    keywords: [crise, communication de crise, cellule de crise, gestion de crise]
+    famille_processus: "Support"
+    code_processus: "S4"
+    libelle_processus: "S4 — Communication"
+    objets_auditables:
+      - label: "Pré-crise (Anticipation)"
+        sous_objets: ["Cartographie des crises", "Plan de communication de crise", "Moyens de communication", "Préparation des équipes", "Templates"]
+      - label: "Durant la crise (Gestion)"
+        sous_objets: ["Délais de communication", "Cohérence des messages", "Diffusion multicanale", "Parties prenantes", "Information des employés", "Gestion de l'image", "Suivi en temps réel"]
+      - label: "Post-crise"
+        sous_objets: ["Analyse post-crise", "Suivi des parties prenantes", "Image de l'entreprise", "Amélioration continue", "Formation"]
+
+  - type: "maintenance_materiel_roulant"
+    keywords: [maintenance, matériel roulant, rames, révision, atelier, GMAO]
+    famille_processus: "Réalisation"
+    code_processus: "R2"
+    libelle_processus: "R2 — Gérer le Matériel Roulant"
+    objets_auditables:
+      - label: "Planification de la maintenance"
+        sous_objets: ["Programmation des révisions", "Gestion des priorités", "Disponibilité des ressources"]
+      - label: "Exécution des interventions"
+        sous_objets: ["Ordres de travail (GMAO)", "Traçabilité des interventions", "Respect des procédures techniques"]
+      - label: "Gestion des pièces critiques"
+        sous_objets: ["Stock pièces de sécurité", "Traçabilité des remplacements", "Fournisseurs agréés"]
+      - label: "Contrôle qualité"
+        sous_objets: ["Réception des travaux", "Tests post-maintenance", "Non-conformités"]
+      - label: "Documentation technique"
+        sous_objets: ["Dossiers de maintenance par rame", "Archivage", "Conformité réglementaire"]
+
+  - type: "gestion_achats"
+    keywords: [achats, approvisionnement, fournisseur, marché, procurement]
+    famille_processus: "Support"
+    code_processus: "S3"
+    libelle_processus: "S3 — Achats & Approvisionnement"
+    objets_auditables:
+      - label: "Expression et validation des besoins"
+        sous_objets: ["Identification des besoins", "Validation hiérarchique", "Cahier des charges"]
+      - label: "Sélection des fournisseurs"
+        sous_objets: ["Appel d'offres", "Critères de sélection", "Homologation fournisseurs"]
+      - label: "Passation des marchés"
+        sous_objets: ["Contrats et clauses", "Délais contractuels", "Conformité réglementaire"]
+      - label: "Réception et contrôle"
+        sous_objets: ["Contrôle qualité à réception", "Traçabilité des livraisons", "Gestion des litiges"]
+      - label: "Suivi fournisseurs"
+        sous_objets: ["Évaluation performance fournisseurs", "Reporting achats", "Risques dépendance fournisseur"]
+
+  - type: "securite_ferroviaire"
+    keywords: [sécurité, SEF, incident, passage à niveau, PN, circulation, SST]
+    famille_processus: "Management"
+    code_processus: "M5"
+    libelle_processus: "M5 — Sécurité et Sûreté Ferroviaire"
+    objets_auditables:
+      - label: "Politique sécurité"
+        sous_objets: ["Documentation SEF", "Diffusion et appropriation", "Mise à jour réglementaire"]
+      - label: "Gestion des incidents"
+        sous_objets: ["Déclaration des incidents", "Analyse des causes", "Actions correctives"]
+      - label: "Habilitations et formations sécurité"
+        sous_objets: ["Habilitations agents", "Recyclages obligatoires", "Traçabilité des formations"]
+      - label: "Contrôle des circulations"
+        sous_objets: ["Signalisation", "Passages à niveau (PN)", "Respects des consignes ERTMS"]
+      - label: "Audit et contrôle interne sécurité"
+        sous_objets: ["Inspections terrain", "Indicateurs SEF", "Reporting sécurité"]
+
+  - type: "generique"
+    keywords: []
+    famille_processus: "Management"
+    code_processus: "M3"
+    libelle_processus: "M3 — Gouvernance"
+    objets_auditables:
+      - label: "Gouvernance et organisation"
+        sous_objets: ["Structure organisationnelle", "Répartition des responsabilités", "Délégations de pouvoirs"]
+      - label: "Processus et procédures"
+        sous_objets: ["Documentation des procédures", "Mise à jour et diffusion", "Conformité aux procédures"]
+      - label: "Contrôle interne"
+        sous_objets: ["Dispositif de contrôle", "Séparation des tâches", "Traçabilité"]
+      - label: "Reporting et pilotage"
+        sous_objets: ["Tableaux de bord", "Indicateurs de performance", "Remontée d'informations"]
+      - label: "Amélioration continue"
+        sous_objets: ["Retour d'expérience", "Actions correctives", "Suivi des recommandations"]

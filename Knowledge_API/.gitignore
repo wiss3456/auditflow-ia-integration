@@ -1,0 +1,8 @@
+.env 
+venv/
+pycache/
+__pycache__/
+.logfire/
+models/
+files/
+cache/

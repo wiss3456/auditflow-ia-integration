@@ -1,0 +1,22 @@
+@AuditFlow.Api_HostAddress = http://localhost:5064
+
+### Bootstrap admin or register user
+POST {{AuditFlow.Api_HostAddress}}/api/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "Admin",
+  "lastName": "AuditFlow",
+  "email": "admin@auditflow.local",
+  "password": "Admin123!",
+  "role": "Admin"
+}
+
+### Login
+POST {{AuditFlow.Api_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@auditflow.local",
+  "password": "Admin123!"
+}

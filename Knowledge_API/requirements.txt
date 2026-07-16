@@ -1,0 +1,13 @@
+tavily-python        # web search
+rank-bm25            # BM25 ranking
+groq                 # LLM calls
+tiktoken             # token counting for chunk evaluation
+httpx                # async HTTP requests
+pydantic             # mission schema validation
+fastapi              # API server
+uvicorn              # ASGI server for FastAPI 
+dotenv              # environment variable management
+firelog==0.1.0       # logging utility for better debugging and monitoring
+PyYAML==6.0.2                 # for configuration file parsing
+sentence-transformers==5.2.1
+huggingface-hub>=0.30.0,<1.0
