@@ -11,6 +11,7 @@ builder.Services
     .AddAuditFlowAuthentication(builder.Configuration)
     .AddAuditFlowServices()
     .AddAuditFlowRepositories()
+    .AddAuditFlowAiClients(builder.Configuration)
     .AddAuditFlowOpenApi();
 
 builder.Services

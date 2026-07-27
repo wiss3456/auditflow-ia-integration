@@ -43,7 +43,7 @@ def initial_generation_pipeline(mission_id,mission,emb_model,encoder_model)-> di
     #chunks_store_R1 = load_cache(mission_id,"chunks_ranked_R1")
 
     # #--Reranking the chunks using the  cross_encoder
-    chunks_store_R2 = cross_encoder_rerank(mission_id,chunks_store_R1,queries_refom,encoder_model,top_k=50)
+    chunks_store_R2 = cross_encoder_rerank(mission_id,chunks_store_R1,queries_refom,encoder_model,top_k=10)
 
     # Token evaluation 
     tokens_report = evaluation_tokens(chunks_store_R2)

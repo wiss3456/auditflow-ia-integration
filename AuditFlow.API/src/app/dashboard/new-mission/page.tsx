@@ -13,7 +13,9 @@ import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import dayjs from 'dayjs';
-
+import { fetchMissionLookupItems } from '@/lib/missions/api';
+import { createMission } from '@/lib/missions/api';
+import { ApiError } from '@/lib/api/http';
 import { useNotifications } from '@/hooks/use-notifications';
 import { useUser } from '@/hooks/use-user';
 import { useWorkspace } from '@/hooks/use-workspace';
@@ -22,11 +24,19 @@ import type { AuditMission } from '@/lib/missions/mock-data';
 import { saveWorkspaceMission, saveWorkspaceSelectedMission } from '@/lib/workspace-storage';
 import { paths } from '@/paths';
 
-function createMissionId(existingMissions: AuditMission[]): string {
+async function createMissionId(): Promise<string> {
   const currentYear = dayjs().format('YYYY');
-  const usedIndexes = existingMissions
-    .filter((mission) => mission.id.startsWith(`ONCF-AI-${currentYear}-`))
-    .map((mission) => Number(mission.id.split('-').at(-1)))
+
+  let realMissions: { missionId: string }[] = [];
+  try {
+    realMissions = await fetchMissionLookupItems();
+  } catch {
+    realMissions = [];
+  }
+
+  const usedIndexes = realMissions
+    .filter((mission) => mission.missionId.startsWith(`ONCF-AI-${currentYear}-`))
+    .map((mission) => Number(mission.missionId.split('-').at(-1)))
     .filter((value) => Number.isFinite(value));
 
   const nextIndex = (usedIndexes.length > 0 ? Math.max(...usedIndexes) : 0) + 1;
@@ -64,6 +74,7 @@ export default function Page(): React.JSX.Element {
   const [form, setForm] = React.useState(initialFormState);
   const [error, setError] = React.useState<string | null>(null);
   const [isPrepared, setIsPrepared] = React.useState(false);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
   const editingMissionId = searchParams.get('missionId');
   const editingMission = React.useMemo(
     () => (editingMissionId ? workspace.missions.find((mission) => mission.id === editingMissionId) ?? null : null),
@@ -147,82 +158,123 @@ export default function Page(): React.JSX.Element {
     setIsPrepared(false);
   };
 
-  const handlePrepareMission = (): void => {
-    if (editingMissionId && !editingMission) {
-      setError("La mission a modifier est introuvable.");
-      return;
-    }
+  const handlePrepareMission = async (): Promise<void> => {
+  if (editingMissionId && !editingMission) {
+    setError("La mission a modifier est introuvable.");
+    return;
+  }
 
-    const title = form.title.trim();
-    const client = form.client.trim();
-    const owner = form.owner.trim();
-    const focusAreas = form.focusAreas.trim();
-    const deliverables = form.deliverables.trim();
-    const dueDate = form.dueDate;
+  const title = form.title.trim();
+  const client = form.client.trim();
+  const owner = form.owner.trim();
+  const focusAreas = form.focusAreas.trim();
+  const deliverables = form.deliverables.trim();
+  const dueDate = form.dueDate;
 
-    if (!title || !client || !owner) {
-      setError("Renseigne au minimum le titre, l'entite et le responsable de mission avant de valider.");
-      return;
-    }
+  if (!title || !client || !owner) {
+    setError("Renseigne au minimum le titre, l'entite et le responsable de mission avant de valider.");
+    return;
+  }
 
-    const objective = focusAreas
-      ? `Mission ONCF creee avec les axes de travail suivants : ${focusAreas}.`
-      : 'Mission ONCF creee sans axes de travail detailles a ce stade.';
+  const objective = focusAreas
+    ? `Mission ONCF creee avec les axes de travail suivants : ${focusAreas}.`
+    : 'Mission ONCF creee sans axes de travail detailles a ce stade.';
+  const fullObjective = deliverables ? `${objective} Livrables attendus : ${deliverables}.` : objective;
+  const nextAction = dueDate
+    ? `Lancer le cadrage de la mission et confirmer l'echeance cible du ${dayjs(dueDate).format('DD MMMM YYYY')}.`
+    : 'Lancer le cadrage de la mission et confirmer le planning operationnel.';
 
-    const mission: AuditMission = editingMission
-      ? {
-          ...editingMission,
-          client,
-          dueDate,
-          nextAction: dueDate
-            ? `Lancer le cadrage de la mission et confirmer l'echeance cible du ${dayjs(dueDate).format('DD MMMM YYYY')}.`
-            : 'Lancer le cadrage de la mission et confirmer le planning operationnel.',
-          objective: deliverables ? `${objective} Livrables attendus : ${deliverables}.` : objective,
-          owner,
-          scope: focusAreas || 'Perimetre a definir',
-          site: client,
-          title,
-        }
-      : {
-          client,
-          createdBy: user?.email ?? user?.name ?? owner,
-          dueDate,
-          id: createMissionId(workspace.missions),
-          nextAction: dueDate
-            ? `Lancer le cadrage de la mission et confirmer l'echeance cible du ${dayjs(dueDate).format('DD MMMM YYYY')}.`
-            : 'Lancer le cadrage de la mission et confirmer le planning operationnel.',
-          objective: deliverables ? `${objective} Livrables attendus : ${deliverables}.` : objective,
-          openFindings: 0,
-          owner,
-          phase: 'Mission prete a lancer',
-          priority: 'Medium',
-          progress: 10,
-          scope: focusAreas || 'Perimetre a definir',
-          site: client,
-          status: 'Planning',
-          title,
-        };
+
+  if (editingMission) {
+    const mission: AuditMission = {
+      ...editingMission,
+      client,
+      dueDate,
+      nextAction,
+      objective: fullObjective,
+      owner,
+      scope: focusAreas || 'Perimetre a definir',
+      site: client,
+      title,
+    };
 
     saveWorkspaceMission(mission);
     setIsPrepared(true);
     addNotification({
-      message: editingMission
-        ? `La mission ${mission.title} a ete mise a jour et synchronisee dans les missions et les ecrans lies.`
-        : `La mission ${mission.title} a ete enregistree et synchronisee dans les missions et les ecrans lies.`,
+      message: `La mission ${mission.title} a ete mise a jour et synchronisee dans les missions et les ecrans lies.`,
       title: 'Mission',
     });
+    router.push(paths.dashboard.missionDetails(mission.id));
+    return;
+  }
 
-    if (editingMission) {
-      router.push(paths.dashboard.missionDetails(mission.id));
-      return;
-    }
+  // --- Cas création : appel réel au backend .NET ---
+  setIsSubmitting(true);
+  setError(null);
+
+  try {
+    const reference = await createMissionId();
+
+    const backendMission = await createMission({
+      client,
+      description: fullObjective,
+      dueDate,
+      objective: fullObjective,
+      ownerUserId: null,
+      reference,
+      scope: focusAreas || 'Perimetre a definir',
+      site: client,
+      title,
+    });
+
+    const mission: AuditMission = {
+      client,
+      createdBy: user?.email ?? user?.name ?? owner,
+      dueDate,
+      id: backendMission.id,
+      nextAction,
+      objective: fullObjective,
+      openFindings: 0,
+      owner,
+      phase: 'Mission prete a lancer',
+      priority: 'Medium',
+      progress: 10,
+      scope: focusAreas || 'Perimetre a definir',
+      site: client,
+      status: 'Planning',
+      title,
+    };
+
+    saveWorkspaceMission(mission);
+    setIsPrepared(true);
+    addNotification({
+      message: `La mission ${mission.title} a ete enregistree cote serveur et synchronisee dans les missions et les ecrans lies.`,
+      title: 'Mission',
+    });
 
     if (user?.id) {
       saveWorkspaceSelectedMission(user.id, mission.id);
     }
 
     router.push(paths.dashboard.overview);
-  };
+  } catch (creationError) {
+  const message =
+    creationError instanceof ApiError
+      ? creationError.message
+      : 'Impossible de creer la mission sur le serveur. Verifie que le backend est bien lance.';
+
+  // Si c'est une collision de référence, réessaie automatiquement une fois
+  if (message.toLowerCase().includes('reference') && message.toLowerCase().includes('existe')) {
+    setError('Nouvelle tentative avec une référence différente...');
+    // on pourrait relancer handlePrepareMission() ici, mais pour rester simple :
+    setError('La référence générée était déjà utilisée. Réessaie en cliquant à nouveau sur "Préparer cette mission".');
+  } else {
+    setError(message);
+  }
+} finally {
+  setIsSubmitting(false);
+}
+};
 
   return (
     <Stack spacing={3}>
@@ -347,9 +399,9 @@ export default function Page(): React.JSX.Element {
             </Grid>
 
             <Stack direction={{ sm: 'row', xs: 'column' }} spacing={1.5}>
-              <Button onClick={handlePrepareMission} variant="contained">
-                {editingMission ? 'Enregistrer les modifications' : 'Preparer cette mission'}
-              </Button>
+              <Button onClick={(): void => { void handlePrepareMission(); }} variant="contained" disabled={isSubmitting}>
+  {isSubmitting ? 'Création en cours...' : editingMission ? 'Enregistrer les modifications' : 'Preparer cette mission'}
+</Button>
               <Button onClick={handleReset} variant="outlined">
                 {editingMission ? 'Reinitialiser les changements' : 'Reinitialiser le formulaire'}
               </Button>

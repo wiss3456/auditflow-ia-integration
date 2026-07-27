@@ -17,7 +17,7 @@ generator = VerificationGenerator()
 
 @router.post("/verification/generate")
 async def generate_verification_program(
-    request: str
+    request: GenerateRequest
 ) :
 
     try:

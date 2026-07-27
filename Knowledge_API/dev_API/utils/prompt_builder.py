@@ -1,5 +1,8 @@
 
-def build_prompt(prompt:dict,chunks:list[dict]):
+import tiktoken
+
+
+def build_prompt(prompt:dict,chunks:list[dict], max_context_tokens: int = 4000):
     """
     the build_prompt is a function that mergers a list of chunks with a prompt 
     to feed it to a LLM :
@@ -26,12 +29,18 @@ def build_prompt(prompt:dict,chunks:list[dict]):
 
     RETRIEVED CONTEXT:
     """
+    encoder = tiktoken.get_encoding("cl100k_base")
     for idx, chunk in enumerate(chunks[:50], 1):
-        merged_prompt += f"""
+        document = f"""
     --- DOCUMENT {idx} ---
     Source: {chunk['url']}
     Content:
     {chunk['chunk']}
     """
+        # The Groq on-demand tier has an 8K TPM limit. Preserve the
+        # highest-ranked documents while leaving room for the completion.
+        if len(encoder.encode(merged_prompt + document)) > max_context_tokens:
+            break
+        merged_prompt += document
 
     return merged_prompt

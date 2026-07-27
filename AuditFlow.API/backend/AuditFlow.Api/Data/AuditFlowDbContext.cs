@@ -8,7 +8,10 @@ public sealed class AuditFlowDbContext(DbContextOptions<AuditFlowDbContext> opti
     public DbSet<FollowUpAction> FollowUpActions => Set<FollowUpAction>();
     public DbSet<Mission> Missions => Set<Mission>();
     public DbSet<User> Users => Set<User>();
-
+    public DbSet<RiskEntry> RiskEntries => Set<RiskEntry>();
+    public DbSet<KnowledgeDossier> KnowledgeDossiers => Set<KnowledgeDossier>();
+    public DbSet<KnowledgeArticle> KnowledgeArticles => Set<KnowledgeArticle>();
+    public DbSet<VerificationTest> VerificationTests => Set<VerificationTest>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

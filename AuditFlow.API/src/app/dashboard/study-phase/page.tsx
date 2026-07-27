@@ -1,5 +1,5 @@
 'use client';
-
+import { KnowledgeDossierViewer } from '@/components/dashboard/study-phase/knowledge-dossier-viewer';
 import * as React from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -36,7 +36,8 @@ import { FloppyDiskIcon } from '@phosphor-icons/react/dist/ssr/FloppyDisk';
 import { SparkleIcon } from '@phosphor-icons/react/dist/ssr/Sparkle';
 import { TrashIcon } from '@phosphor-icons/react/dist/ssr/Trash';
 import { XCircleIcon } from '@phosphor-icons/react/dist/ssr/XCircle';
-
+import { apiRequest, ApiError } from '@/lib/api/http';
+import { authClient } from '@/lib/auth/client';
 import { MissionRequiredAccess } from '@/components/dashboard/mission-required-access';
 import { useNotifications } from '@/hooks/use-notifications';
 import { KnowledgeReferencePanel } from '@/components/dashboard/study-phase/knowledge-reference-panel';
@@ -44,9 +45,24 @@ import { useUser } from '@/hooks/use-user';
 import { useWorkspace } from '@/hooks/use-workspace';
 import { getSelectedMissionIdForUser } from '@/lib/missions/selection';
 import { loadWorkspaceState, saveWorkspaceStudyPhaseState } from '@/lib/workspace-storage';
-import verificationProgramRaw from '../../../../programme de verification.json';
-
+import { updateVerificationTest } from '@/lib/missions/api';
+import { generateRisks, fetchRisks  } from '@/lib/missions/api';
+import { generateVerification, fetchVerificationTests, type BackendVerificationTest } from '@/lib/missions/api';
+import { updateRiskDecision } from '@/lib/missions/api';
 type TabKey = 'knowledge' | 'risk-listing' | 'final-talk' | 'audit-planning' | 'orientation-report';
+type KnowledgeLayerKey =
+  | 'benchmarking' | 'best_practices' | 'causes' | 'context_and_definition'
+  | 'controls' | 'real_incidents' | 'regularisation';
+
+interface KnowledgeArticle { article_id: string; citations: string[]; content: string; title: string; }
+interface KnowledgeLayer { articles: KnowledgeArticle[]; summary: string; }
+type KnowledgeDataset = Record<KnowledgeLayerKey, KnowledgeLayer>;
+
+interface BackendKnowledgeDossier {
+  dimensionKey: string;
+  summary: string;
+  articles: { articleId: string; title: string; content: string; citations: string[] }[];
+}
 type RiskImpact = 'Low' | 'Medium' | 'High';
 type RiskPriority = 'Medium' | 'High' | 'Critical';
 type FinalRiskAssessment = 'Critique' | 'Moderee' | 'Mineure';
@@ -171,13 +187,7 @@ interface AuditTestDraft {
   testNumber: string;
 }
 
-interface VerificationProgramItem {
-  methodologie: string;
-  mission_id: string;
-  objectif: string;
-  risque: string;
-  tache: string;
-}
+
 
 interface RiskRow {
   auditableObject: string;
@@ -277,7 +287,6 @@ const c = (id: string, title: string, category: string, summary: string, detail:
 });
 
 const d = (addedAt: string, name: string, size: number) => ({ addedAt, name, size });
-const verificationProgram = verificationProgramRaw as VerificationProgramItem[];
 
 const createOrientationObjectiveRow = (
   id: string,
@@ -323,11 +332,6 @@ function formatAuditDateValue(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-function addProgramDays(date: Date, days: number): Date {
-  const result = new Date(date);
-  result.setDate(result.getDate() + days);
-  return result;
-}
 
 function normalizeVerificationText(value: string | undefined, fallback: string): string {
   if (typeof value !== 'string') {
@@ -339,55 +343,44 @@ function normalizeVerificationText(value: string | undefined, fallback: string):
   return normalized || fallback;
 }
 
-function getVerificationTestStatus(index: number): TestStatus {
-  if (index < 5) {
-    return 'Cloture';
-  }
 
-  if (index < 11) {
-    return 'En cours';
-  }
 
+function mapRiskRowToFinalTalkRow(risk: RiskRow): FinalTalkRow {
+  return {
+    auditableObject: risk.auditableObject,
+    auditableSubObject: risk.auditableSubObject,
+    code: risk.code,
+    controlMeasure: risk.controlMeasure,
+    id: `risk-derived-${risk.id}`,
+    impact: risk.impact,
+    operationalControlObjective: risk.operationalControlObjective,
+    probability: risk.probability,
+    riskAssessment: risk.riskAssessment,
+    title: risk.risk,
+  };
+}
+function mapBackendVerificationStatus(status: string): TestStatus {
+  if (status === 'EnCours') return 'En cours';
+  if (status === 'Cloture') return 'Cloture';
   return 'Ouvert';
 }
 
-function getVerificationTestStartDate(index: number, status: TestStatus): Date {
-  if (status === 'Cloture') {
-    return addProgramDays(new Date('2026-05-05T00:00:00'), index * 2);
-  }
-
-  if (status === 'En cours') {
-    return addProgramDays(new Date('2026-06-02T00:00:00'), (index - 5) * 2);
-  }
-
-  return addProgramDays(new Date('2026-06-16T00:00:00'), (index - 11) * 2);
+function mapBackendVerificationToRow(test: BackendVerificationTest): AuditTestRow {
+  return createAuditTestRow(
+    test.id,
+    test.testNumber,
+    test.tache,
+    test.objectif,
+    test.methodologie,
+    isAuditAuditor(test.auditor) ? test.auditor : 'Rim Diab',
+    mapBackendVerificationStatus(test.status),
+    test.startDate ?? '',
+    test.endDate ?? '',
+    test.comments,
+    test.action,
+    test.isNonConformity
+  );
 }
-
-function createVerificationProgramAuditTests(): AuditTestRow[] {
-  return verificationProgram.map((item, index) => {
-    const status = getVerificationTestStatus(index);
-    const startDate = getVerificationTestStartDate(index, status);
-    const endDate = addProgramDays(startDate, status === 'Ouvert' ? 5 : 4);
-    const missionReference = normalizeVerificationText(item.mission_id, 'MISSION-RECLAM-2026-001');
-    const riskSummary = normalizeVerificationText(item.risque, 'Risque a preciser');
-
-    return createAuditTestRow(
-      `test-${index + 1}`,
-      `TV-${String(index + 1).padStart(3, '0')}`,
-      normalizeVerificationText(item.tache, 'Tache a documenter'),
-      normalizeVerificationText(item.objectif, 'Objectif a completer'),
-      normalizeVerificationText(item.methodologie, 'Methodologie a completer'),
-      auditAuditors[index % auditAuditors.length],
-      status,
-      formatAuditDateValue(startDate),
-      formatAuditDateValue(endDate),
-      `${riskSummary} | Mission : ${missionReference}`,
-      `Tracer le resultat du test et formaliser les suites de controle pour ${missionReference}.`,
-      status !== 'Cloture'
-    );
-  });
-}
-
 const createRiskRow = (
   id: string,
   code: string,
@@ -416,96 +409,8 @@ const createRiskRow = (
     riskAssessment,
   };
 };
-const defaultRiskRows = [
-  createRiskRow(
-    'risk-1',
-    'LR-101',
-    'Maintenance preventive',
-    'Rames a forte rotation',
-    'Retard de maintenance preventive sur les rames a forte rotation',
-    'Verifier que les visites preventives critiques sont planifiees et realisees sans report non justifie.',
-    'Critique',
-    'Plan de maintenance valide, suivi GMAO et visa depot sur les reports.'
-  ),
-  createRiskRow(
-    'risk-2',
-    'LR-112',
-    'Gestion des pieces critiques',
-    'Organes de freinage',
-    'Traçabilité incomplète des pièces de sécurité remplacées en dépôt',
-    'Confirmer la tracabilite des organes de freinage remplaces et la presence des preuves de pose.',
-    'Moderee',
-    'Rapprochement stock systeme / stock physique et fiche atelier avec numero de lot.'
-  ),
-  createRiskRow(
-    'risk-3',
-    'LR-129',
-    'Systemes d information',
-    'Habilitations GMAO',
-    'Habilitations trop larges dans la GMAO de maintenance',
-    'S’assurer que les accès sensibles sont limités aux rôles autorisés et revus périodiquement.',
-    'Critique',
-    'Revue periodique des droits sensibles et journalisation des profils techniques.'
-  ),
-];
 
-const defaultFinalTalkRows: FinalTalkRow[] = [
-  {
-    auditableObject: 'Maintenance preventive',
-    auditableSubObject: 'Rames a forte rotation',
-    code: 'MR-204',
-    controlMeasure: 'Plan de maintenance valide, suivi GMAO et visa depot sur les reports.',
-    id: 'final-risk-1',
-    ...getFinalRiskAssessmentProfile('Critique'),
-    operationalControlObjective: 'Verifier que les visites preventives critiques sont programmees, executees et justifiees sans rupture de disponibilite.',
-    riskAssessment: 'Critique',
-    title: 'Retard de maintenance sur rame a forte rotation',
-  },
-  {
-    auditableObject: 'Gestion des pieces critiques',
-    auditableSubObject: 'Organes de freinage',
-    code: 'MR-112',
-    controlMeasure: 'Rapprochement stock systeme / stock physique et fiche atelier avec numero de lot.',
-    id: 'final-risk-2',
-    ...getFinalRiskAssessmentProfile('Moderee'),
-    operationalControlObjective: 'Confirmer la tracabilite complete des pieces critiques remplacees et la fiabilite des preuves de pose.',
-    riskAssessment: 'Moderee',
-    title: 'Tracabilite insuffisante des organes de freinage',
-  },
-  {
-    auditableObject: 'Systemes d information',
-    auditableSubObject: 'Habilitations GMAO',
-    code: 'MR-089',
-    controlMeasure: 'Revue periodique des droits sensibles et journalisation des profils techniques.',
-    id: 'final-risk-3',
-    ...getFinalRiskAssessmentProfile('Critique'),
-    operationalControlObjective: 'S’assurer que les accès à la GMAO sont limités aux rôles habilités et régulièrement revus.',
-    riskAssessment: 'Critique',
-    title: 'Habilitations GMAO non revues periodiquement',
-  },
-  {
-    auditableObject: 'Coordination opérationnelle',
-    auditableSubObject: 'Planification depot / exploitation',
-    code: 'MR-301',
-    controlMeasure: 'Comite hebdomadaire depot-exploitation et tableau de suivi des immobilisations.',
-    id: 'final-risk-4',
-    ...getFinalRiskAssessmentProfile('Moderee'),
-    operationalControlObjective: 'Verifier la coherence entre les immobilisations programmees et les besoins du plan de transport.',
-    riskAssessment: 'Moderee',
-    title: 'Planification depot et exploitation non synchronisee',
-  },
-  {
-    auditableObject: 'Documentation technique',
-    auditableSubObject: 'Dossiers de maintenance par rame',
-    code: 'MR-410',
-    controlMeasure: 'Checklist documentaire obligatoire avant clôture du dossier atelier.',
-    id: 'final-risk-5',
-    ...getFinalRiskAssessmentProfile('Mineure'),
-    operationalControlObjective: 'Vérifier la présence et la cohérence des documents techniques attachés à chaque intervention clôturée.',
-    riskAssessment: 'Mineure',
-    title: 'Dossiers techniques incomplets lors des transferts atelier',
-  },
-];
+
 
 const legacyDefaultAuditTests = [
   createAuditTestRow(
@@ -564,7 +469,6 @@ const legacyDefaultAuditTests = [
   ),
 ];
 
-const defaultAuditTests = createVerificationProgramAuditTests();
 
 const aiRiskRecommendations = [
   createRiskRow(
@@ -771,13 +675,7 @@ function isAuditAuditor(value: string): value is AuditAuditor {
   return auditAuditors.includes(value as AuditAuditor);
 }
 
-function createDefaultRiskRows(): RiskRow[] {
-  return defaultRiskRows.map((row) => ({ ...row }));
-}
 
-function createDefaultFinalTalkRows(): FinalTalkRow[] {
-  return defaultFinalTalkRows.map((row) => ({ ...row }));
-}
 
 function createDefaultFinalTalkDraft(): FinalTalkDraft {
   return {
@@ -831,9 +729,7 @@ function createRiskDraftFromRow(row: RiskRow): RiskDraft {
   };
 }
 
-function createDefaultAuditTests(): AuditTestRow[] {
-  return defaultAuditTests.map((row) => ({ ...row }));
-}
+
 
 function createDefaultAuditTestDraft(): AuditTestDraft {
   return {
@@ -920,14 +816,14 @@ function createDefaultOrientationReport(): OrientationReportData {
 
 function createTabState(tab: TabDef): TabState {
   return {
-    auditTests: tab.key === 'audit-planning' ? createDefaultAuditTests() : [],
+    auditTests:[],
     documents: tab.documents.map((document, index) => ({ ...document, id: `${tab.key}-${index}` })),
-    finalTalkRows: tab.key === 'final-talk' ? createDefaultFinalTalkRows() : [],
+    finalTalkRows: [],
     isGenerated: false,
     isValidated: false,
     notes: [],
     orientationReport: tab.key === 'orientation-report' ? createDefaultOrientationReport() : createDefaultOrientationReport(),
-    riskRows: tab.key === 'risk-listing' ? createDefaultRiskRows() : [],
+    riskRows: [],
     savedAt: null,
     validatedAt: null,
     validatedBy: null,
@@ -943,17 +839,7 @@ const createState = (): StudyState =>
     {} as StudyState
   );
 
-function shouldRefreshAuditPlanningDefaults(rows: AuditTestRow[] | undefined): boolean {
-  if (!Array.isArray(rows) || rows.length === 0) {
-    return false;
-  }
 
-  return rows.some((row) => {
-    const description = typeof row.controlDescription === 'string' ? row.controlDescription.toLowerCase() : '';
-
-    return description.includes('maintenance') || description.includes('gmao') || description.includes('gares');
-  });
-}
 
 const loadState = (): StudyState => {
   const base = createState();
@@ -969,77 +855,10 @@ const loadState = (): StudyState => {
     return tabs.reduce(
       (accumulator, tab) => {
         const parsedTab = parsed[tab.key];
-        const shouldUseRefreshedAuditPlanningDefaults =
-          tab.key === 'audit-planning' && shouldRefreshAuditPlanningDefaults(parsedTab?.auditTests as AuditTestRow[] | undefined);
-
         accumulator[tab.key] = {
-          auditTests: Array.isArray(parsedTab?.auditTests) && !shouldUseRefreshedAuditPlanningDefaults
-            ? (parsedTab.auditTests as AuditTestRow[]).map((row, index) => ({
-                action: typeof row.action === 'string' ? row.action : 'Action corrective a definir',
-                auditor: isAuditAuditor(row.auditor) ? row.auditor : base[tab.key].auditTests[index]?.auditor ?? 'Rim Diab',
-                comments: typeof row.comments === 'string' ? row.comments : 'Commentaires a completer',
-                controlDescription:
-                  typeof row.controlDescription === 'string' && row.controlDescription.trim()
-                    ? row.controlDescription
-                    : base[tab.key].auditTests[index]?.controlDescription ?? 'Tache a documenter',
-                endDate:
-                  typeof row.endDate === 'string' && row.endDate.trim()
-                    ? row.endDate
-                    : base[tab.key].auditTests[index]?.endDate ?? '2026-04-25',
-                id: typeof row.id === 'string' ? row.id : `${tab.key}-test-${index}`,
-                isNonConformity: Boolean(row.isNonConformity),
-                methodology:
-                  typeof row.methodology === 'string' && row.methodology.trim()
-                    ? row.methodology
-                    : base[tab.key].auditTests[index]?.methodology ?? 'Methodologie a completer',
-                objective:
-                  typeof row.objective === 'string' && row.objective.trim()
-                    ? row.objective
-                    : base[tab.key].auditTests[index]?.objective ?? 'Objectif a completer',
-                startDate:
-                  typeof row.startDate === 'string' && row.startDate.trim()
-                    ? row.startDate
-                    : base[tab.key].auditTests[index]?.startDate ?? '2026-04-20',
-                status: isTestStatus(row.status) ? row.status : base[tab.key].auditTests[index]?.status ?? 'Ouvert',
-                testNumber:
-                  typeof row.testNumber === 'string' && row.testNumber.trim()
-                    ? row.testNumber
-                    : base[tab.key].auditTests[index]?.testNumber ?? `TV-${String(index + 1).padStart(3, '0')}`,
-              }))
-            : base[tab.key].auditTests,
+    auditTests: base[tab.key].auditTests,
           documents: Array.isArray(parsedTab?.documents) ? (parsedTab.documents as DocItem[]) : base[tab.key].documents,
-          finalTalkRows: Array.isArray(parsedTab?.finalTalkRows)
-            ? (parsedTab.finalTalkRows as FinalTalkRow[]).map((row, index) => {
-                const fallbackAssessment = deriveFinalRiskAssessment(isRiskImpact(row.impact) ? row.impact : 'Medium');
-                const riskAssessment = isFinalRiskAssessment(row.riskAssessment) ? row.riskAssessment : fallbackAssessment;
-                const assessmentProfile = getFinalRiskAssessmentProfile(riskAssessment);
-
-                return {
-                  auditableObject:
-                    typeof row.auditableObject === 'string' && row.auditableObject.trim()
-                      ? row.auditableObject
-                      : base[tab.key].finalTalkRows[index]?.auditableObject ?? 'Périmètre global',
-                  auditableSubObject:
-                    typeof row.auditableSubObject === 'string' && row.auditableSubObject.trim()
-                      ? row.auditableSubObject
-                      : base[tab.key].finalTalkRows[index]?.auditableSubObject ?? 'Composante specifique',
-                  code: typeof row.code === 'string' && row.code.trim() ? row.code : `MR-${index + 1}`,
-                  controlMeasure:
-                    typeof row.controlMeasure === 'string' && row.controlMeasure.trim()
-                      ? row.controlMeasure
-                      : base[tab.key].finalTalkRows[index]?.controlMeasure ?? 'Bonnes pratiques a documenter',
-                  id: typeof row.id === 'string' ? row.id : `${tab.key}-final-${index}`,
-                  impact: assessmentProfile.impact,
-                  operationalControlObjective:
-                    typeof row.operationalControlObjective === 'string' && row.operationalControlObjective.trim()
-                      ? row.operationalControlObjective
-                      : base[tab.key].finalTalkRows[index]?.operationalControlObjective ?? 'Justification du contrôle à renseigner',
-                  probability: assessmentProfile.probability,
-                  riskAssessment,
-                  title: typeof row.title === 'string' && row.title.trim() ? row.title : 'Intitulé à compléter',
-                };
-              })
-            : base[tab.key].finalTalkRows,
+          finalTalkRows: base[tab.key].finalTalkRows,
           isGenerated: false,
           isValidated: parsedTab?.isValidated ?? false,
           notes: Array.isArray(parsedTab?.notes) ? (parsedTab.notes as NoteItem[]) : [],
@@ -1136,53 +955,7 @@ const loadState = (): StudyState => {
                       : base[tab.key].orientationReport.writer,
                 }
               : base[tab.key].orientationReport,
-          riskRows: Array.isArray(parsedTab?.riskRows)
-            ? (parsedTab.riskRows as RiskRow[]).map((row, index) => {
-                const fallbackImpact = isRiskImpact(row.impact) ? row.impact : base[tab.key].riskRows[index]?.impact ?? 'Medium';
-                const riskAssessment = isFinalRiskAssessment(row.riskAssessment) ? row.riskAssessment : deriveFinalRiskAssessment(fallbackImpact);
-                const assessmentProfile = getFinalRiskAssessmentProfile(riskAssessment);
-                const legacyValidated = 'validated' in row && typeof row.validated === 'boolean' ? row.validated : false;
-                const decisionStatus =
-                  row.decisionStatus === 'Accepte' || row.decisionStatus === 'Brouillon' || row.decisionStatus === 'Refuse'
-                    ? row.decisionStatus
-                    : legacyValidated
-                      ? 'Accepte'
-                      : 'Brouillon';
-
-                return {
-                  auditableObject:
-                    typeof row.auditableObject === 'string' && row.auditableObject.trim()
-                      ? row.auditableObject
-                      : base[tab.key].riskRows[index]?.auditableObject ?? 'Périmètre global',
-                  auditableSubObject:
-                    typeof row.auditableSubObject === 'string' && row.auditableSubObject.trim()
-                      ? row.auditableSubObject
-                      : base[tab.key].riskRows[index]?.auditableSubObject ?? 'Composante specifique',
-                  code:
-                    typeof row.code === 'string' && row.code.trim()
-                      ? row.code
-                      : base[tab.key].riskRows[index]?.code ?? `LR-${String(index + 1).padStart(3, '0')}`,
-                  controlMeasure:
-                    typeof row.controlMeasure === 'string' && row.controlMeasure.trim()
-                      ? row.controlMeasure
-                      : base[tab.key].riskRows[index]?.controlMeasure ?? 'Bonnes pratiques a documenter',
-                  decisionStatus,
-                  id: typeof row.id === 'string' ? row.id : `${tab.key}-risk-${index}`,
-                  impact: assessmentProfile.impact,
-                  operationalControlObjective:
-                    typeof row.operationalControlObjective === 'string' && row.operationalControlObjective.trim()
-                      ? row.operationalControlObjective
-                      : base[tab.key].riskRows[index]?.operationalControlObjective ?? 'Justification du contrôle à renseigner',
-                  priority: derivePriority(assessmentProfile.impact, assessmentProfile.probability),
-                  probability: assessmentProfile.probability,
-                  risk:
-                    typeof row.risk === 'string' && row.risk.trim()
-                      ? row.risk
-                      : base[tab.key].riskRows[index]?.risk ?? 'Risque a documenter',
-                  riskAssessment,
-                };
-              })
-            : base[tab.key].riskRows,
+          riskRows: base[tab.key].riskRows,
           savedAt: parsedTab?.savedAt ?? null,
           validatedAt: parsedTab?.validatedAt ?? null,
           validatedBy: parsedTab?.validatedBy ?? null,
@@ -1267,7 +1040,10 @@ function parseDateInput(value: string): Date | null {
 }
 
 function formatDateKey(date: Date): string {
-  return date.toISOString().slice(0, 10);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 function addDays(date: Date, amount: number): Date {
@@ -1446,6 +1222,9 @@ export default function Page(): React.JSX.Element {
   const finalTalkTableRef = React.useRef<HTMLDivElement | null>(null);
   const hasHydratedWorkspaceDraftRef = React.useRef(false);
   const [activeTab, setActiveTab] = React.useState<TabKey>('knowledge');
+  const [knowledgeDataset, setKnowledgeDataset] = React.useState<KnowledgeDataset | null>(null);
+  const [isGeneratingKnowledge, setIsGeneratingKnowledge] = React.useState(false);
+  const [isGeneratingRisks, setIsGeneratingRisks] = React.useState(false);
   const [activeKnowledgeCardId, setActiveKnowledgeCardId] = React.useState<string>('synthese');
   const [state, setState] = React.useState<StudyState>(createState);
   const [selectedCardId, setSelectedCardId] = React.useState<string | null>(null);
@@ -1478,6 +1257,99 @@ export default function Page(): React.JSX.Element {
   const [finalTalkPageSize, setFinalTalkPageSize] = React.useState(DEFAULT_TABLE_PAGE_SIZE);
   const [auditPlanningPageSize, setAuditPlanningPageSize] = React.useState(DEFAULT_TABLE_PAGE_SIZE);
   const selectedMissionId = React.useMemo(() => getSelectedMissionIdForUser(workspace, user?.id), [user?.id, workspace]);
+  const [isGeneratingVerification, setIsGeneratingVerification] = React.useState(false);
+  React.useEffect(() => {
+  if (!selectedMissionId) {
+    setKnowledgeDataset(null);
+    setState((current) => ({
+      ...current,
+      knowledge: { ...current.knowledge, isGenerated: false },
+      'risk-listing': { ...current['risk-listing'], riskRows: [] },
+      'final-talk': { ...current['final-talk'], finalTalkRows: [] },
+    }));
+    return;
+  }
+
+  let isCancelled = false;
+
+  const loadExistingMissionData = async (): Promise<void> => {
+    // ---- Connaissances ----
+    let dataset: KnowledgeDataset | null = null;
+    try {
+      const dossiers = await apiRequest<BackendKnowledgeDossier[]>(
+        `/api/missions/${selectedMissionId}/knowledge`,
+        { method: 'GET', headers: { Authorization: `Bearer ${authClient.getToken() ?? ''}` } }
+      );
+      if (dossiers.length > 0) {
+        dataset = dossiers.reduce<KnowledgeDataset>((accumulator, dossier) => {
+          accumulator[dossier.dimensionKey as KnowledgeLayerKey] = {
+            summary: dossier.summary,
+            articles: dossier.articles.map((a) => ({
+              article_id: a.articleId,
+              title: a.title,
+              content: a.content,
+              citations: a.citations,
+            })),
+          };
+          return accumulator;
+        }, {} as KnowledgeDataset);
+      }
+    } catch {
+      dataset = null;
+    }
+
+    // ---- Risques ----
+    let mappedRisks: RiskRow[] = [];
+    try {
+      const backendRisks = await fetchRisks(selectedMissionId);
+      mappedRisks = backendRisks.map((r) =>
+        createRiskRow(
+          r.id,
+          `LR-${r.id.slice(0, 4).toUpperCase()}`,
+          r.objetAuditable,
+          r.sousObjetAuditable,
+          r.risque,
+          '',
+          isFinalRiskAssessment(r.evaluation) ? r.evaluation : 'Moderee',
+          r.bonnePratique,
+          r.decisionStatus === 'Accepte' || r.decisionStatus === 'Refuse' || r.decisionStatus === 'Brouillon'
+            ? r.decisionStatus
+            : 'Brouillon'
+        )
+      );
+    } catch {
+      mappedRisks = [];
+    }
+
+    if (isCancelled) return;
+
+    const derivedFinalTalkRows = mappedRisks
+      .filter((risk) => risk.decisionStatus === 'Accepte')
+      .map((risk) => mapRiskRowToFinalTalkRow(risk));
+      let mappedTests: AuditTestRow[] = [];
+try {
+  const backendTests = await fetchVerificationTests(selectedMissionId);
+  mappedTests = backendTests.map(mapBackendVerificationToRow);
+} catch {
+  mappedTests = [];
+}
+
+    setKnowledgeDataset(dataset);
+    setState((current) => ({
+      ...current,
+      knowledge: { ...current.knowledge, isGenerated: dataset !== null },
+      'risk-listing': { ...current['risk-listing'], riskRows: mappedRisks },
+      'final-talk': { ...current['final-talk'], finalTalkRows: derivedFinalTalkRows },
+      'audit-planning': { ...current['audit-planning'], auditTests: mappedTests },
+    }));
+  };
+
+  void loadExistingMissionData();
+
+  return () => {
+    isCancelled = true;
+  };
+}, [selectedMissionId]);
 
   React.useEffect(() => {
     setState(loadState());
@@ -1671,13 +1543,49 @@ export default function Page(): React.JSX.Element {
     }));
   };
 
-  const handleGenerate = (): void => {
+  const handleGenerate = async (): Promise<void> => {
+  if (activeTab !== 'knowledge') {
     updateState((current) => ({
       ...current,
       [activeTab]: { ...current[activeTab], isGenerated: true, isValidated: false, validatedAt: null, validatedBy: null },
     }));
     addNotification({ title: "Phase d'étude", message: `Les 7 cadres de ${currentTab.label} ont été générés.` });
-  };
+    return;
+  }
+
+  setIsGeneratingKnowledge(true);
+  try {
+   const dossiers = await apiRequest<BackendKnowledgeDossier[]>(
+  `/api/missions/${selectedMissionId}/knowledge/generate`,
+      { method: 'POST', headers: { Authorization: `Bearer ${authClient.getToken() ?? ''}` } }
+    );
+
+    const dataset = dossiers.reduce<KnowledgeDataset>((accumulator, dossier) => {
+      accumulator[dossier.dimensionKey as KnowledgeLayerKey] = {
+        summary: dossier.summary,
+        articles: dossier.articles.map((a) => ({
+          article_id: a.articleId,
+          title: a.title,
+          content: a.content,
+          citations: a.citations,
+        })),
+      };
+      return accumulator;
+    }, {} as KnowledgeDataset);
+
+    setKnowledgeDataset(dataset);
+    updateState((current) => ({
+      ...current,
+      knowledge: { ...current.knowledge, isGenerated: true, isValidated: false, validatedAt: null, validatedBy: null },
+    }));
+    addNotification({ title: "Phase d'étude", message: 'Le dossier de connaissances a été généré avec succès.' });
+  } catch (error) {
+    const message = error instanceof ApiError ? error.message : 'Impossible de générer le dossier de connaissances.';
+    addNotification({ title: 'Erreur', message });
+  } finally {
+    setIsGeneratingKnowledge(false);
+  }
+};
 
   const handleSave = (): void => {
     saveState(
@@ -1730,16 +1638,31 @@ export default function Page(): React.JSX.Element {
     setIsRiskDialogOpen(true);
   };
 
-  const handleSetRiskDecisionStatus = (riskId: string, decisionStatus: RiskDecisionStatus): void => {
+ const handleSetRiskDecisionStatus = async (riskId: string, decisionStatus: RiskDecisionStatus): Promise<void> => {
     const targetRisk = riskRows.find((row) => row.id === riskId);
-
-    if (!targetRisk) {
-      return;
-    }
+    if (!targetRisk) return;
 
     const nextDecisionStatus = targetRisk.decisionStatus === decisionStatus ? 'Brouillon' : decisionStatus;
 
     updateRiskRows((rows) => rows.map((row) => (row.id === riskId ? { ...row, decisionStatus: nextDecisionStatus } : row)));
+
+    const derivedId = `risk-derived-${riskId}`;
+    if (nextDecisionStatus === 'Accepte') {
+      const derivedRow = mapRiskRowToFinalTalkRow({ ...targetRisk, decisionStatus: nextDecisionStatus });
+      updateFinalTalkRows((rows) => {
+        const alreadyExists = rows.some((row) => row.id === derivedId);
+        return alreadyExists ? rows.map((row) => (row.id === derivedId ? derivedRow : row)) : [derivedRow, ...rows];
+      });
+    } else {
+      updateFinalTalkRows((rows) => rows.filter((row) => row.id !== derivedId));
+    }
+
+    // NOUVEAU : sauvegarde réelle en base
+    try {
+      await updateRiskDecision(riskId, nextDecisionStatus);
+    } catch {
+      addNotification({ title: 'Erreur', message: 'La sauvegarde de la décision a échoué.' });
+    }
 
     addNotification({
       title: 'Listing des risques',
@@ -1748,51 +1671,63 @@ export default function Page(): React.JSX.Element {
           ? `Le risque "${targetRisk.risk}" est revenu a l etat initial.`
           : `Le risque "${targetRisk.risk}" a ete marque ${nextDecisionStatus.toLowerCase()}.`,
     });
-  };
+};
 
-  const handleRiskRecommendation = (): void => {
-    const existingRisks = new Set(riskRows.map((row) => row.risk.trim().toLowerCase()));
-    const missingRecommendations = aiRiskRecommendations.filter((row) => !existingRisks.has(row.risk.toLowerCase()));
+  const handleRiskRecommendation = async (): Promise<void> => {
+  if (!selectedMissionId) {
+    addNotification({ title: 'Erreur', message: 'Aucune mission sélectionnée.' });
+    return;
+  }
 
-    if (missingRecommendations.length > 0) {
-      const recommendationsToAdd = missingRecommendations.slice(0, 2).map((row, index) => ({
-        ...row,
-        id: `risk-ai-${Date.now()}-${index}`,
-      }));
+  setIsGeneratingRisks(true);
+  try {
+    const backendRisks = await generateRisks(selectedMissionId);
 
-      updateRiskRows((rows) => [...recommendationsToAdd, ...rows]);
-      addNotification({
-        title: 'Listing des risques',
-        message: `${recommendationsToAdd.length} recommandation(s) IA ont été ajoutées.`,
-      });
-      return;
-    }
-
-    updateRiskRows((rows) =>
-      rows.map((row, index) => {
-        if (index > 1) {
-          return row;
-        }
-
-        const nextProbability = clampProbability(row.probability + 1);
-        const nextImpact = row.impact;
-        const nextAssessment = deriveFinalRiskAssessment(nextImpact);
-
-        return {
-          ...row,
-          decisionStatus: row.decisionStatus,
-          impact: nextImpact,
-          priority: derivePriority(nextImpact, nextProbability),
-          probability: nextProbability,
-          riskAssessment: nextAssessment,
-        };
-      })
+    updateRiskRows(() =>
+      backendRisks.map((r) =>
+        createRiskRow(
+          r.id,
+          `LR-${r.id.slice(0, 4).toUpperCase()}`,
+          r.objetAuditable,
+          r.sousObjetAuditable,
+          r.risque,
+          '',
+          isFinalRiskAssessment(r.evaluation) ? r.evaluation : 'Moderee',
+          r.bonnePratique,
+          r.decisionStatus === 'Accepte' || r.decisionStatus === 'Refuse' || r.decisionStatus === 'Brouillon'
+            ? r.decisionStatus
+            : 'Brouillon'
+        )
+      )
     );
+
     addNotification({
       title: 'Listing des risques',
-      message: 'La recommandation IA a réévalué les priorités des risques existants.',
+      message: `${backendRisks.length} risque(s) généré(s) par l'IA.`,
     });
-  };
+  } catch (error) {
+    const message = error instanceof ApiError ? error.message : 'La génération des risques a échoué.';
+    addNotification({ title: 'Erreur', message });
+  } finally {
+    setIsGeneratingRisks(false);
+  }
+};
+  const handleGenerateVerification = async (): Promise<void> => {
+  if (!selectedMissionId) return;
+
+  setIsGeneratingVerification(true);
+  try {
+    const backendTests = await generateVerification(selectedMissionId);
+    const mapped = backendTests.map(mapBackendVerificationToRow);
+    updateAuditTests(() => mapped);
+    addNotification({ title: 'Planification & tests', message: `${mapped.length} test(s) généré(s).` });
+  } catch (error) {
+    const message = error instanceof ApiError ? error.message : 'La génération du programme a échoué.';
+    addNotification({ title: 'Erreur', message });
+  } finally {
+    setIsGeneratingVerification(false);
+  }
+};
 
   const handleRiskDraftFieldChange = (field: keyof RiskDraft, value: string): void => {
     setRiskDraftError(null);
@@ -1978,66 +1913,77 @@ export default function Page(): React.JSX.Element {
     setSelectedAuditTestMenuRow(null);
   };
 
-  const handleSubmitAuditTest = (): void => {
-    const requiredFields = [
-      auditTestDraft.testNumber,
-      auditTestDraft.controlDescription,
-      auditTestDraft.objective,
-      auditTestDraft.methodology,
-      auditTestDraft.auditor,
-      auditTestDraft.comments,
-      auditTestDraft.startDate,
-      auditTestDraft.status,
-      auditTestDraft.endDate,
-      auditTestDraft.action,
-    ];
+ const handleSubmitAuditTest = async (): Promise<void> => {
+  const requiredFields = [
+    auditTestDraft.testNumber,
+    auditTestDraft.controlDescription,
+    auditTestDraft.objective,
+    auditTestDraft.methodology,
+    auditTestDraft.auditor,
+    auditTestDraft.status,
+  ];
 
-    if (requiredFields.some((field) => !field.trim())) {
-      setAuditTestDraftError('Renseigne tous les champs du formulaire avant de valider le test.');
-      return;
-    }
+  if (requiredFields.some((field) => !field.trim())) {
+    setAuditTestDraftError('Renseigne au minimum le numéro, la tâche, l\'objectif, la méthodologie, l\'auditeur et le statut.');
+    return;
+  }
 
-    if (parseDateInput(auditTestDraft.startDate) && parseDateInput(auditTestDraft.endDate) && auditTestDraft.startDate > auditTestDraft.endDate) {
-      setAuditTestDraftError('La date de fin doit etre posterieure ou egale a la date de debut.');
-      return;
-    }
+  if (parseDateInput(auditTestDraft.startDate) && parseDateInput(auditTestDraft.endDate) && auditTestDraft.startDate > auditTestDraft.endDate) {
+    setAuditTestDraftError('La date de fin doit etre posterieure ou egale a la date de debut.');
+    return;
+  }
 
-    if (!isAuditAuditor(auditTestDraft.auditor) || !isTestStatus(auditTestDraft.status)) {
-      setAuditTestDraftError('Selectionne un auditeur et un statut valides.');
-      return;
-    }
+  if (!isAuditAuditor(auditTestDraft.auditor) || !isTestStatus(auditTestDraft.status)) {
+    setAuditTestDraftError('Selectionne un auditeur et un statut valides.');
+    return;
+  }
 
-    const nextRow = createAuditTestRow(
-      editingAuditTestId ?? `test-${Date.now()}`,
-      auditTestDraft.testNumber.trim(),
-      auditTestDraft.controlDescription.trim(),
-      auditTestDraft.objective.trim(),
-      auditTestDraft.methodology.trim(),
-      auditTestDraft.auditor,
-      auditTestDraft.status,
-      auditTestDraft.startDate,
-      auditTestDraft.endDate,
-      auditTestDraft.comments.trim(),
-      auditTestDraft.action.trim(),
-      auditTestDraft.isNonConformity
-    );
+  const nextRow = createAuditTestRow(
+    editingAuditTestId ?? `test-${Date.now()}`,
+    auditTestDraft.testNumber.trim(),
+    auditTestDraft.controlDescription.trim(),
+    auditTestDraft.objective.trim(),
+    auditTestDraft.methodology.trim(),
+    auditTestDraft.auditor,
+    auditTestDraft.status,
+    auditTestDraft.startDate,
+    auditTestDraft.endDate,
+    auditTestDraft.comments.trim(),
+    auditTestDraft.action.trim(),
+    auditTestDraft.isNonConformity
+  );
 
-    if (editingAuditTestId) {
-      updateAuditTests((rows) => rows.map((row) => (row.id === editingAuditTestId ? nextRow : row)));
-      addNotification({
-        title: 'Programme de vérification',
-        message: `Le test ${nextRow.testNumber} a ete mis a jour.`,
+  if (editingAuditTestId) {
+    try {
+      await updateVerificationTest(editingAuditTestId, {
+        testNumber: nextRow.testNumber,
+        tache: nextRow.controlDescription,
+        objectif: nextRow.objective,
+        methodologie: nextRow.methodology,
+        auditor: nextRow.auditor,
+        status: nextRow.status,
+        startDate: nextRow.startDate,
+        endDate: nextRow.endDate,
+        comments: nextRow.comments,
+        action: nextRow.action,
+        isNonConformity: nextRow.isNonConformity,
       });
-    } else {
-      updateAuditTests((rows) => [...rows, nextRow]);
-      addNotification({
-        title: 'Programme de vérification',
-        message: `Le test ${nextRow.testNumber} a été ajouté au programme de vérification.`,
-      });
+    } catch {
+      addNotification({ title: 'Erreur', message: 'La sauvegarde du test a échoué.' });
+      return;
     }
+  }
 
-    handleCloseAuditTestDialog();
-  };
+  if (editingAuditTestId) {
+    updateAuditTests((rows) => rows.map((row) => (row.id === editingAuditTestId ? nextRow : row)));
+    addNotification({ title: 'Programme de vérification', message: `Le test ${nextRow.testNumber} a ete mis a jour.` });
+  } else {
+    updateAuditTests((rows) => [...rows, nextRow]);
+    addNotification({ title: 'Programme de vérification', message: `Le test ${nextRow.testNumber} a été ajouté au programme de vérification.` });
+  }
+
+  handleCloseAuditTestDialog();
+};
 
   const handleDeleteAuditTest = (testId: string): void => {
     const targetTest = auditTests.find((row) => row.id === testId);
@@ -2402,9 +2348,14 @@ export default function Page(): React.JSX.Element {
 
         {isRiskListingTab ? (
           <Stack direction={{ sm: 'row', xs: 'column' }} spacing={1.25}>
-            <Button onClick={handleRiskRecommendation} startIcon={<SparkleIcon fontSize="var(--icon-fontSize-md)" />} variant="outlined">
-              Recommandation IA
-            </Button>
+            <Button
+  onClick={(): void => { void handleRiskRecommendation(); }}
+  startIcon={<SparkleIcon fontSize="var(--icon-fontSize-md)" />}
+  variant="outlined"
+  disabled={isGeneratingRisks}
+>
+  {isGeneratingRisks ? 'Génération en cours...' : 'Recommandation IA'}
+</Button>
             <Button onClick={handleAddRisk} variant="contained">
               Ajouter risque
             </Button>
@@ -2416,6 +2367,14 @@ export default function Page(): React.JSX.Element {
             </Button>
             <Button onClick={(): void => setPlanningView('gantt')} variant={planningView === 'gantt' ? 'contained' : 'outlined'}>
               Gantt View
+            </Button>
+            <Button
+              onClick={(): void => { void handleGenerateVerification(); }}
+              startIcon={<SparkleIcon fontSize="var(--icon-fontSize-md)" />}
+              variant="outlined"
+              disabled={isGeneratingVerification}
+            >
+              {isGeneratingVerification ? 'Génération en cours...' : 'Générer le programme'}
             </Button>
             <Button onClick={handleOpenAddAuditTest} variant="contained">
               Ajouter test
@@ -2435,10 +2394,15 @@ export default function Page(): React.JSX.Element {
             Ajouter
           </Button>
         ) : (
-          <Button onClick={handleGenerate} startIcon={<SparkleIcon fontSize="var(--icon-fontSize-md)" />} variant="contained">
-            Générer
-          </Button>
-        )}
+  <Button
+    onClick={(): void => { void handleGenerate(); }}
+    startIcon={<SparkleIcon fontSize="var(--icon-fontSize-md)" />}
+    variant="contained"
+    disabled={activeTab === 'knowledge' && isGeneratingKnowledge}
+  >
+    {activeTab === 'knowledge' && isGeneratingKnowledge ? 'Génération en cours...' : 'Générer'}
+  </Button>
+)}
       </Stack>
 
       {isRiskListingTab ? (
@@ -2579,7 +2543,7 @@ export default function Page(): React.JSX.Element {
                                   <Stack alignItems="center" direction="row" gap={0.7} sx={{ justifyContent: 'center', justifySelf: 'center' }}>
                                     <IconButton
                                       aria-label={`Accepter ${row.risk}`}
-                                      onClick={(): void => handleSetRiskDecisionStatus(row.id, 'Accepte')}
+                                      onClick={(): void => { void handleSetRiskDecisionStatus(row.id, 'Accepte'); }}
                                       size="small"
                                       sx={{
                                         backgroundColor: row.decisionStatus === 'Accepte' ? '#dcfce7' : 'transparent',
@@ -2598,7 +2562,7 @@ export default function Page(): React.JSX.Element {
                                     </IconButton>
                                     <IconButton
                                       aria-label={`Refuser ${row.risk}`}
-                                      onClick={(): void => handleSetRiskDecisionStatus(row.id, 'Refuse')}
+                                      onClick={(): void => { void handleSetRiskDecisionStatus(row.id, 'Refuse'); }}
                                       size="small"
                                       sx={{
                                         backgroundColor: row.decisionStatus === 'Refuse' ? '#fee2e2' : 'transparent',
@@ -2619,7 +2583,7 @@ export default function Page(): React.JSX.Element {
                                   <Stack alignItems="center" direction="row" gap={0.35} sx={{ justifyContent: 'center', justifySelf: 'center' }}>
                                       <Button
                                         color="success"
-                                        onClick={(): void => handleSetRiskDecisionStatus(row.id, 'Accepte')}
+                                        onClick={(): void => { void handleSetRiskDecisionStatus(row.id, 'Accepte'); }}
                                         size="small"
                                         startIcon={<Box component="span" sx={{ fontSize: '0.44rem', lineHeight: 1 }}>{'✔'}</Box>}
                                         sx={{
@@ -2648,7 +2612,7 @@ export default function Page(): React.JSX.Element {
                                       </Button>
                                       <Button
                                         color="error"
-                                        onClick={(): void => handleSetRiskDecisionStatus(row.id, 'Refuse')}
+                                        onClick={(): void => { void handleSetRiskDecisionStatus(row.id, 'Refuse'); }}
                                         size="small"
                                         startIcon={<Box component="span" sx={{ fontSize: '0.44rem', lineHeight: 1 }}>{'✖'}</Box>}
                                         sx={{
@@ -3859,7 +3823,7 @@ export default function Page(): React.JSX.Element {
                 </Stack>
               </Stack>
               {activeTab === 'knowledge' ? (
-                <KnowledgeReferencePanel aiLabel={aiLabel} isGenerated={currentState.isGenerated} />
+              <KnowledgeDossierViewer missionId={selectedMissionId ?? ''} />
               ) : (
                 <Card sx={{ border: '1px solid rgba(148, 163, 184, 0.14)', borderRadius: '20px', boxShadow: '0 12px 30px rgba(15, 23, 42, 0.06)' }}>
                   <CardContent sx={{ p: 0 }}>
@@ -4164,6 +4128,18 @@ export default function Page(): React.JSX.Element {
                   value={auditTestDraft.comments}
                 />
               </Grid>
+              <Grid size={{ xs: 12 }}>
+  <TextField
+    fullWidth
+    label="Action corrective"
+    minRows={2}
+    multiline
+    onChange={(event): void => handleAuditTestDraftFieldChange('action', event.target.value)}
+    size="small"
+    sx={compactAuditFieldSx}
+    value={auditTestDraft.action}
+  />
+</Grid>
             </Grid>
 
             {auditTestDraftError ? (
@@ -4173,7 +4149,7 @@ export default function Page(): React.JSX.Element {
         </DialogContent>
         <DialogActions sx={{ p: 2.5, pt: 0 }}>
           <Button onClick={handleCloseAuditTestDialog}>Annuler</Button>
-          <Button onClick={handleSubmitAuditTest} variant="contained">
+          <Button onClick={(): void => { void handleSubmitAuditTest(); }} variant="contained">
             {editingAuditTestId ? 'Enregistrer les modifications' : 'Ajouter le test'}
           </Button>
         </DialogActions>
