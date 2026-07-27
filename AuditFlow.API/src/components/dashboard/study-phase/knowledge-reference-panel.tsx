@@ -15,7 +15,6 @@ import Tabs from '@mui/material/Tabs';
 import Typography from '@mui/material/Typography';
 import { EyeIcon } from '@phosphor-icons/react/dist/ssr/Eye';
 
-import knowledgeDossierRaw from '../../../../knowledge_dossier_1.json';
 
 type KnowledgeLayerKey =
   | 'benchmarking'
@@ -82,6 +81,7 @@ interface KnowledgeSection {
 interface KnowledgeReferencePanelProps {
   aiLabel: string;
   isGenerated: boolean;
+  dataset: KnowledgeDataset | null;
 }
 
 const blueTitleSx = { color: '#1d4ed8', fontSize: '1.08rem', fontWeight: 800 };
@@ -92,7 +92,6 @@ const sectionCardSx = {
   p: 2.1,
 };
 
-const knowledgeDossier = knowledgeDossierRaw as KnowledgeDataset;
 
 const knowledgeSectionDefinitions: KnowledgeSectionDefinition[] = [
   {
@@ -187,14 +186,14 @@ function deduplicateSources(sections: KnowledgeSupportSection[], articles: Knowl
   return [...sourceSet];
 }
 
-function buildKnowledgeSection(definition: KnowledgeSectionDefinition): KnowledgeSection {
-  const primaryLayer = knowledgeDossier[definition.key];
+function buildKnowledgeSection(definition: KnowledgeSectionDefinition, dataset: KnowledgeDataset): KnowledgeSection {
+  const primaryLayer = dataset[definition.key];
   const articles = sliceArticles(primaryLayer, definition.articleLimit, definition.articleOffset);
   const extraArticles = primaryLayer.articles.slice((definition.articleOffset ?? 0) + definition.articleLimit);
   const supportingSections =
     definition.supportingSections?.map((section) => ({
-      articles: sliceArticles(knowledgeDossier[section.key], section.articleLimit, section.articleOffset),
-      extraArticles: knowledgeDossier[section.key].articles.slice((section.articleOffset ?? 0) + section.articleLimit),
+      articles: sliceArticles(dataset[section.key], section.articleLimit, section.articleOffset),
+      extraArticles: dataset[section.key].articles.slice((section.articleOffset ?? 0) + section.articleLimit),
       label: section.label,
     })) ?? [];
   const sources = deduplicateSources(supportingSections, articles);
@@ -345,8 +344,11 @@ function renderExpandedContent(section: KnowledgeSection): React.JSX.Element {
   );
 }
 
-export function KnowledgeReferencePanel({ aiLabel, isGenerated }: KnowledgeReferencePanelProps): React.JSX.Element {
-  const knowledgeSections = React.useMemo(() => knowledgeSectionDefinitions.map(buildKnowledgeSection), []);
+export function KnowledgeReferencePanel({ aiLabel, isGenerated, dataset }: KnowledgeReferencePanelProps): React.JSX.Element {
+  const knowledgeSections = React.useMemo(
+    () => (dataset ? knowledgeSectionDefinitions.map((def) => buildKnowledgeSection(def, dataset)) : []),
+    [dataset]
+  );
   const [activeSectionId, setActiveSectionId] = React.useState<string>(knowledgeSections[0]?.id ?? 'context');
   const [selectedSectionId, setSelectedSectionId] = React.useState<string | null>(null);
 

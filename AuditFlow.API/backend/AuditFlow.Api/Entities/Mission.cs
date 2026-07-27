@@ -6,6 +6,9 @@ public sealed class Mission : BaseEntity
     public string? Description { get; set; }
     public DateOnly DueDate { get; set; }
     public ICollection<FollowUpAction> FollowUpActions { get; set; } = new List<FollowUpAction>();
+    public ICollection<RiskEntry> RiskEntries { get; set; } = new List<RiskEntry>();
+    public ICollection<KnowledgeDossier> KnowledgeDossiers { get; set; } = new List<KnowledgeDossier>();
+    public ICollection<VerificationTest> VerificationTests { get; set; } = new List<VerificationTest>();
     public string? Objective { get; set; }
     public Guid? OwnerUserId { get; set; }
     public User? OwnerUser { get; set; }

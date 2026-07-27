@@ -118,6 +118,83 @@ namespace AuditFlow.Api.Migrations
                     b.ToTable("follow_up_actions", (string)null);
                 });
 
+            modelBuilder.Entity("AuditFlow.Api.Entities.KnowledgeArticle", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ArticleId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("CitationsJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasMaxLength(8000)
+                        .HasColumnType("character varying(8000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("KnowledgeDossierId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("KnowledgeDossierId");
+
+                    b.ToTable("knowledge_articles", (string)null);
+                });
+
+            modelBuilder.Entity("AuditFlow.Api.Entities.KnowledgeDossier", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContentHash")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DimensionKey")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<DateTime>("LastGeneratedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("MissionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Summary")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MissionId");
+
+                    b.ToTable("knowledge_dossiers", (string)null);
+                });
+
             modelBuilder.Entity("AuditFlow.Api.Entities.Mission", b =>
                 {
                     b.Property<Guid>("Id")
@@ -174,6 +251,75 @@ namespace AuditFlow.Api.Migrations
                         .IsUnique();
 
                     b.ToTable("missions", (string)null);
+                });
+
+            modelBuilder.Entity("AuditFlow.Api.Entities.RiskEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BonnePratique")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DecisionStatus")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("Evaluation")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Impact")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Likelihood")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("MissionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ObjectifOperationnelControle")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ObjetAuditable")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("RequestId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Risque")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("SousObjetAuditable")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TypeControle")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DecisionStatus");
+
+                    b.HasIndex("MissionId");
+
+                    b.ToTable("risk_entries", (string)null);
                 });
 
             modelBuilder.Entity("AuditFlow.Api.Entities.User", b =>
@@ -237,6 +383,80 @@ namespace AuditFlow.Api.Migrations
                     b.ToTable("users", (string)null);
                 });
 
+            modelBuilder.Entity("AuditFlow.Api.Entities.VerificationTest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("AssignedUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Auditor")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Comments")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly?>("EndDate")
+                        .HasColumnType("date");
+
+                    b.Property<bool>("IsNonConformity")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Methodologie")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("MissionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Objectif")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("RiskEntryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly?>("StartDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("Tache")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("TestNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssignedUserId");
+
+                    b.HasIndex("MissionId");
+
+                    b.HasIndex("RiskEntryId");
+
+                    b.ToTable("verification_tests", (string)null);
+                });
+
             modelBuilder.Entity("AuditFlow.Api.Entities.FollowUpAction", b =>
                 {
                     b.HasOne("AuditFlow.Api.Entities.User", "AssignedUser")
@@ -263,6 +483,28 @@ namespace AuditFlow.Api.Migrations
                     b.Navigation("Mission");
                 });
 
+            modelBuilder.Entity("AuditFlow.Api.Entities.KnowledgeArticle", b =>
+                {
+                    b.HasOne("AuditFlow.Api.Entities.KnowledgeDossier", "KnowledgeDossier")
+                        .WithMany("Articles")
+                        .HasForeignKey("KnowledgeDossierId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("KnowledgeDossier");
+                });
+
+            modelBuilder.Entity("AuditFlow.Api.Entities.KnowledgeDossier", b =>
+                {
+                    b.HasOne("AuditFlow.Api.Entities.Mission", "Mission")
+                        .WithMany("KnowledgeDossiers")
+                        .HasForeignKey("MissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Mission");
+                });
+
             modelBuilder.Entity("AuditFlow.Api.Entities.Mission", b =>
                 {
                     b.HasOne("AuditFlow.Api.Entities.User", "OwnerUser")
@@ -273,9 +515,56 @@ namespace AuditFlow.Api.Migrations
                     b.Navigation("OwnerUser");
                 });
 
+            modelBuilder.Entity("AuditFlow.Api.Entities.RiskEntry", b =>
+                {
+                    b.HasOne("AuditFlow.Api.Entities.Mission", "Mission")
+                        .WithMany("RiskEntries")
+                        .HasForeignKey("MissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Mission");
+                });
+
+            modelBuilder.Entity("AuditFlow.Api.Entities.VerificationTest", b =>
+                {
+                    b.HasOne("AuditFlow.Api.Entities.User", "AssignedUser")
+                        .WithMany()
+                        .HasForeignKey("AssignedUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("AuditFlow.Api.Entities.Mission", "Mission")
+                        .WithMany("VerificationTests")
+                        .HasForeignKey("MissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AuditFlow.Api.Entities.RiskEntry", "RiskEntry")
+                        .WithMany()
+                        .HasForeignKey("RiskEntryId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("AssignedUser");
+
+                    b.Navigation("Mission");
+
+                    b.Navigation("RiskEntry");
+                });
+
+            modelBuilder.Entity("AuditFlow.Api.Entities.KnowledgeDossier", b =>
+                {
+                    b.Navigation("Articles");
+                });
+
             modelBuilder.Entity("AuditFlow.Api.Entities.Mission", b =>
                 {
                     b.Navigation("FollowUpActions");
+
+                    b.Navigation("KnowledgeDossiers");
+
+                    b.Navigation("RiskEntries");
+
+                    b.Navigation("VerificationTests");
                 });
 
             modelBuilder.Entity("AuditFlow.Api.Entities.User", b =>

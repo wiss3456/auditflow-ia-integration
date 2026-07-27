@@ -13,6 +13,7 @@ using Microsoft.OpenApi.Models;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
+
 namespace AuditFlow.Api.Extensions;
 
 public static class ServiceCollectionExtensions
@@ -41,6 +42,31 @@ public static class ServiceCollectionExtensions
 
         return services;
     }
+    public static IServiceCollection AddAuditFlowAiClients(this IServiceCollection services, IConfiguration configuration)
+{
+    services.Configure<AiServicesOptions>(configuration.GetSection(AiServicesOptions.SectionName));
+
+    services.AddHttpClient<IKnowledgeDossierService, KnowledgeDossierService>((sp, client) =>
+    {
+        var opts = sp.GetRequiredService<IOptions<AiServicesOptions>>().Value;
+        client.BaseAddress = new Uri(opts.Knowledge);
+        client.Timeout = Timeout.InfiniteTimeSpan; 
+    });
+    services.AddHttpClient<IRiskEntryService, RiskEntryService>((sp, client) =>
+{
+    var opts = sp.GetRequiredService<IOptions<AiServicesOptions>>().Value;
+    client.BaseAddress = new Uri(opts.RiskAdvisor);
+    client.Timeout = Timeout.InfiniteTimeSpan;
+});
+services.AddHttpClient<IVerificationTestService, VerificationTestService>((sp, client) =>
+{
+    var opts = sp.GetRequiredService<IOptions<AiServicesOptions>>().Value;
+    client.BaseAddress = new Uri(opts.Verification);
+    client.Timeout = Timeout.InfiniteTimeSpan;
+});
+
+    return services;
+}
 
     public static IServiceCollection AddAuditFlowPersistence(this IServiceCollection services, IConfiguration configuration)
     {
@@ -72,6 +98,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IMissionRepository, MissionRepository>();
         services.AddScoped<IFollowUpActionRepository, FollowUpActionRepository>();
+        services.AddScoped<IRiskEntryRepository, RiskEntryRepository>();
+        services.AddScoped<IKnowledgeDossierRepository, KnowledgeDossierRepository>();
+        services.AddScoped<IVerificationTestRepository, VerificationTestRepository>();
         return services;
     }
 
@@ -83,6 +112,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IMissionService, MissionService>();
         services.AddScoped<IFollowUpActionService, FollowUpActionService>();
         services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IRiskEntryService, RiskEntryService>(); 
+        services.AddScoped<IVerificationTestService, VerificationTestService>();
         return services;
     }
 
