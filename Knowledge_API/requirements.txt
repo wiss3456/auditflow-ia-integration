@@ -9,5 +9,5 @@ uvicorn              # ASGI server for FastAPI
 dotenv              # environment variable management
 firelog==0.1.0       # logging utility for better debugging and monitoring
 PyYAML==6.0.2                 # for configuration file parsing
-sentence-transformers==5.2.1
+sentence-transformers==5.6.0
 huggingface-hub>=0.30.0,<1.0
